@@ -40,7 +40,22 @@ def summarize_table(df: pd.DataFrame, name: str) -> dict[str, Any]:
         - A table can have zero rows. Do not divide by zero.
         - Return plain Python numbers so the result can be written as JSON.
     """
-    raise NotImplementedError("TODO(student): summarize one table")
+    df_before = df.copy()
+    mb_before = memory_mb(df_before)
+    df_after = reduce_memory(df_before)
+    mb_after = memory_mb(df_after)
+    rows, cols = df.shape
+    missing_pct = (df.isnull().sum().sum() / (rows * cols) * 100) if rows > 0 and cols > 0 else 0.0
+
+    return {
+        "table": name,
+        "rows": rows,
+        "cols": cols,
+        "mb_before": mb_before,
+        "mb_after": mb_after,
+        "missing_pct": missing_pct
+    }
+
 
 
 # TODO(student)
@@ -60,7 +75,19 @@ def summarize_all(config: dict[str, Any]) -> list[dict[str, Any]]:
         - The reports folder may not exist yet.
         - Load and summarize one table at a time so memory stays low.
     """
-    raise NotImplementedError("TODO(student): summarize all tables and write the report")
+    summary_list = []
+    reports_dir = config["paths"]["reports_dir"]
+    reports_dir.mkdir(parents=True, exist_ok=True)
+
+    for table_name in config["tables"]:
+        df = load_table(table_name, config)
+        summary = summarize_table(df, table_name)
+        summary_list.append(summary)
+
+    summary_path = reports_dir / SUMMARY_FILENAME
+    pd.DataFrame(summary_list).to_json(summary_path, orient="records", indent=4)
+
+    return summary_list
 
 
 # PROVIDED
