@@ -49,7 +49,11 @@ def clean_application(df: pd.DataFrame) -> pd.DataFrame:
         - Use the module constant, not a typed-in number.
         - It must work on frames without TARGET too.
     """
-    raise NotImplementedError("TODO(student): replace the DAYS_EMPLOYED sentinel and add the flag")
+    out = df.copy()
+    is_sentinel = out["DAYS_EMPLOYED"] == DAYS_EMPLOYED_SENTINEL
+    out["DAYS_EMPLOYED_ANOM"] = is_sentinel.astype(int)
+    out["DAYS_EMPLOYED"] = out["DAYS_EMPLOYED"].mask(is_sentinel)
+    return out
 
 
 # TODO(student)

@@ -56,4 +56,21 @@ def load_split(config: dict[str, Any]) -> tuple[pd.DataFrame, pd.DataFrame]:
         - Check the split file before you trust it, and fail loudly if it looks wrong.
         - Use ``config["id_col"]`` instead of typing the column name.
     """
-    raise NotImplementedError("TODO(student): load the fixed split and return (train_df, valid_df)")
+    id_col = config["id_col"]
+    app = load_application(config)
+    split = pd.read_csv(config["paths"]["split_file"], dtype={id_col: app[id_col].dtype})
+
+    # Check the split file before trusting it.
+    if split[id_col].duplicated().any():
+        raise ValueError(f"Split file lists some {id_col} values more than once.")
+    bad_values = set(split["split"]) - {"train", "valid"}
+    if bad_values:
+        raise ValueError(f"Split file has unknown split values: {sorted(bad_values)}")
+    if set(split[id_col]) != set(app[id_col]) or len(split) != len(app):
+        raise ValueError("Split file ids do not match the sampled applicants one-to-one.")
+
+    train_ids = split.loc[split["split"] == "train", id_col]
+    valid_ids = split.loc[split["split"] == "valid", id_col]
+    train_df = app[app[id_col].isin(train_ids)].reset_index(drop=True)
+    valid_df = app[app[id_col].isin(valid_ids)].reset_index(drop=True)
+    return train_df, valid_df
