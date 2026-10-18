@@ -90,6 +90,7 @@ def summarize_all(config: dict[str, Any]) -> list[dict[str, Any]]:
     return summary_list
 
 
+
 # PROVIDED
 def print_summary(rows: list[dict[str, Any]]) -> None:
     """Print the summary as an aligned table."""
