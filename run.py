@@ -8,10 +8,12 @@ Usage (from the repository root):
     python run.py sample       build the 5,000-applicant sample
     python run.py summary      write reports/table_summary.json
     python run.py baseline     train the baseline and write reports/metrics.json
+    python run.py compare      baseline on growing feature sets -> reports/auc_comparison.json
     python run.py test         run the tests
     python run.py lint         check code style
-    python run.py check        run the Week 1 checks
-    python run.py all          sample (if missing), summary, baseline, then check
+    python run.py check        run the Week 2 checks
+    python run.py check1       run the Week 1 checks
+    python run.py all          sample (if missing), summary, baseline, compare, then check
 
 Options for ``sample``: ``--force`` rebuilds an existing sample, and ``--raw-dir PATH`` uses
 a full download in another folder instead of data/raw.
@@ -37,18 +39,22 @@ COMMANDS = {
     "sample": "build the 5,000-applicant sample (--force, --raw-dir PATH)",
     "summary": "write reports/table_summary.json",
     "baseline": "train the baseline and write reports/metrics.json",
+    "compare": "baseline on growing feature sets -> reports/auc_comparison.json",
     "test": "run the tests",
     "lint": "check code style",
-    "check": "run the Week 1 checks",
-    "all": "sample (if missing), summary, baseline, then check",
+    "check": "run the Week 2 checks",
+    "check1": "run the Week 1 checks",
+    "all": "sample (if missing), summary, baseline, compare, then check",
 }
 MODULES = {
     "sample": ["-m", "scripts.make_sample"],
     "summary": ["-m", "src.summarize"],
     "baseline": ["-m", "src.baseline"],
+    "compare": ["-m", "src.compare"],
     "test": ["-m", "pytest"],
     "lint": ["-m", "ruff", "check", "."],
-    "check": ["-m", "scripts.check_week1"],
+    "check": ["-m", "scripts.check_week2"],
+    "check1": ["-m", "scripts.check_week1"],
 }
 
 
@@ -83,8 +89,10 @@ def setup() -> int:
 
 # PROVIDED
 def run_all() -> int:
-    """Run the Week 1 path in order, stopping at the first failure."""
-    steps = ([] if SAMPLE_FILE.exists() else ["sample"]) + ["summary", "baseline", "check"]
+    """Run the whole path so far in order, stopping at the first failure."""
+    steps = ([] if SAMPLE_FILE.exists() else ["sample"]) + [
+        "summary", "baseline", "compare", "check",
+    ]
     for step in steps:
         code = run([python(), *MODULES[step]])
         if code != 0:
