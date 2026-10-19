@@ -14,7 +14,6 @@ import pandas as pd
 COUNT_SUFFIX = "_COUNT"
 
 
-# TODO(student)
 def assert_one_row_per_applicant(
     df: pd.DataFrame, expected_ids: pd.Series, id_col: str = "SK_ID_CURR"
 ) -> None:
@@ -34,10 +33,37 @@ def assert_one_row_per_applicant(
         - Equal row counts are not enough on their own: one duplicated id plus one missing id
           keeps the count the same.
     """
-    raise NotImplementedError("TODO(student): check one row per applicant")
+    if id_col not in df.columns:
+        raise ValueError(f"{id_col} column missing from table with columns {list(df.columns)}")
+
+    actual_ids = df[id_col]
+    expected_ids = pd.Series(expected_ids).reset_index(drop=True)
+
+    n_expected = len(expected_ids)
+    n_actual = len(df)
+    if n_actual != n_expected:
+        raise ValueError(f"{n_actual} rows for {n_expected} applicants")
+
+    duplicates = actual_ids[actual_ids.duplicated()].unique()
+    if len(duplicates):
+        dup_list = ", ".join(str(x) for x in duplicates[:10])
+        raise ValueError(f"duplicate applicant ids found: {dup_list}")
+
+    actual_set = set(actual_ids.tolist())
+    expected_set = set(expected_ids.tolist())
+    if actual_set != expected_set:
+        missing = sorted(expected_set - actual_set)
+        extra = sorted(actual_set - expected_set)
+        if missing and extra:
+            raise ValueError(
+                f"{len(missing)} missing and {len(extra)} extra applicant ids; "
+                f"missing={missing[:10]}, extra={extra[:10]}"
+            )
+        if missing:
+            raise ValueError(f"{len(missing)} missing applicant ids: {missing[:10]}")
+        raise ValueError(f"{len(extra)} extra applicant ids: {extra[:10]}")
 
 
-# TODO(student)
 def join_features(
     app: pd.DataFrame, feature_tables: dict[str, pd.DataFrame], id_col: str = "SK_ID_CURR"
 ) -> pd.DataFrame:
@@ -64,4 +90,30 @@ def join_features(
         - ``pd.merge`` has a ``validate=`` argument that can raise on duplicate keys for you.
         - Why 0 for counts but NaN for averages? Be ready to explain it at the checkpoint.
     """
-    raise NotImplementedError("TODO(student): left-join the feature tables")
+    out = app.copy()
+    if not feature_tables:
+        assert_one_row_per_applicant(out, app[id_col], id_col=id_col)
+        return out
+
+    for table_name, table in feature_tables.items():
+        if id_col not in table.columns:
+            raise ValueError(f"{table_name} is missing {id_col}")
+        if table[id_col].duplicated().any():
+            raise ValueError(f"{table_name} has duplicate {id_col} values; it was probably not aggregated")
+    
+        for col in table.columns:
+            if col == id_col:
+                continue
+            if col in out.columns:
+                raise ValueError(f"Feature column '{col}' already exists in the application table")
+
+        out = out.merge(table, on=id_col, how="left", validate="one_to_one")
+
+        for col in table.columns:
+            if col == id_col:
+                continue
+            if col.endswith(COUNT_SUFFIX):
+                out[col] = out[col].fillna(0)
+
+    assert_one_row_per_applicant(out, app[id_col], id_col=id_col)
+    return out
