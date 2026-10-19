@@ -85,3 +85,4 @@ rather than claim an unmeasured margin. Rare categories, unusual histories,
 and small demographic groups may be absent or poorly represented. Historical
 borrowers may differ from future applicants. This sample supports an initial
 baseline, not confident subgroup conclusions or deployment readiness.
+ 
