@@ -32,7 +32,7 @@ def load_application(config: dict[str, Any]) -> pd.DataFrame:
     return load_table("application_train", config)
 
 
-# TODO(student)
+# TODO(Ali)
 def load_split(config: dict[str, Any]) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Split the sampled application table into train and validation rows.
 

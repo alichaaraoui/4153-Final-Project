@@ -27,7 +27,7 @@ def pr_auc(y_true: ArrayLike, y_score: ArrayLike) -> float:
     return float(average_precision_score(y_true, y_score))
 
 
-# TODO(student)
+# TODO(Ali)
 def ks_statistic(y_true: ArrayLike, y_score: ArrayLike) -> float:
     """Kolmogorov-Smirnov (KS) statistic between the scores of the two classes.
 
@@ -53,7 +53,7 @@ def ks_statistic(y_true: ArrayLike, y_score: ArrayLike) -> float:
     return float(np.max(tpr - fpr))
 
 
-# TODO(student)
+# TODO(Ali)
 def evaluate(y_true: ArrayLike, y_score: ArrayLike) -> dict[str, float]:
     """Compute every validation metric we report.
 

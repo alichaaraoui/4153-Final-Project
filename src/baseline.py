@@ -13,7 +13,10 @@ from typing import Any
 
 import pandas as pd
 from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from src.data import load_split  # noqa: F401  (you will use these in run_baseline)
 from src.metrics import evaluate  # noqa: F401
@@ -27,7 +30,7 @@ METRICS_KEYS = (
 MODEL_NAME = "logistic_regression"
 
 
-# TODO(student)
+# TODO(Ali)
 def clean_application(df: pd.DataFrame) -> pd.DataFrame:
     """Fix the known DAYS_EMPLOYED data problem and return a cleaned copy.
 
@@ -56,7 +59,7 @@ def clean_application(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-# TODO(student)
+# TODO(Timmy)
 def get_feature_columns(df: pd.DataFrame, config: dict[str, Any]) -> tuple[list[str], list[str]]:
     """Decide which columns go into the model, split into numeric and categorical lists.
 
@@ -76,10 +79,21 @@ def get_feature_columns(df: pd.DataFrame, config: dict[str, Any]) -> tuple[list[
         - With pandas 3, text columns have dtype ``str``, not ``object``. Test for "numeric",
           and treat everything else as categorical.
     """
-    raise NotImplementedError("TODO(student): split the columns into numeric and categorical")
+    id_col = config["id_col"]
+    target_col = config["target_col"]
+    numeric_cols = []
+    categorical_cols = []
+    for col in df.columns:
+        if col in [id_col, target_col]:
+            continue
+        if pd.api.types.is_numeric_dtype(df[col]) or pd.api.types.is_bool_dtype(df[col]):
+            numeric_cols.append(col)
+        else:
+            categorical_cols.append(col)
+    return numeric_cols, categorical_cols
 
 
-# TODO(student)
+# TODO(Timmy)
 def build_preprocessor(numeric_cols: list[str], categorical_cols: list[str]) -> ColumnTransformer:
     """Build the (unfitted) preprocessing step for the model.
 
@@ -99,10 +113,22 @@ def build_preprocessor(numeric_cols: list[str], categorical_cols: list[str]) -> 
         - Validation data can contain a category that never appears in training.
         - Return the transformer unfitted; fitting happens later, on training data only.
     """
-    raise NotImplementedError("TODO(student): build the ColumnTransformer")
+    numeric_pipeline = Pipeline([
+        ("inputer", SimpleImputer(strategy="median")),
+        ("scaler", StandardScaler()),
+    ])
+    categorical_pipeline = Pipeline([
+        ("inputer", SimpleImputer(strategy="most_frequent")),
+        ("encoder", OneHotEncoder(handle_unknown="ignore")),
+    ])
+
+    return ColumnTransformer([
+        ("numeric", numeric_pipeline, numeric_cols),
+        ("categorical", categorical_pipeline, categorical_cols),
+    ])
 
 
-# TODO(student)
+# TODO(Timmy)
 def build_model(config: dict[str, Any], preprocessor: ColumnTransformer) -> Pipeline:
     """Build the full (unfitted) model: preprocessing followed by logistic regression.
 
@@ -119,10 +145,20 @@ def build_model(config: dict[str, Any], preprocessor: ColumnTransformer) -> Pipe
         - Take every setting from the config, so a config change needs no code change.
         - Give each step a short, readable name.
     """
-    raise NotImplementedError("TODO(student): build the Pipeline")
+    baseline_config = config["baseline"]
+
+    model = LogisticRegression(
+        **baseline_config,
+        random_state=config["seed"],
+    )
+
+    return Pipeline([
+        ("preprocessor", preprocessor),
+        ("classifer", model),
+    ])
 
 
-# TODO(student)
+# TODO(Timmy)
 def write_metrics(metrics: dict[str, float], extra: dict[str, Any], path: str | Path) -> None:
     """Write the run's results to a JSON file.
 
@@ -141,10 +177,26 @@ def write_metrics(metrics: dict[str, float], extra: dict[str, Any], path: str | 
         - Indent the JSON so a person can read it.
         - NumPy numbers are not JSON-serializable; make sure the values are plain Python types.
     """
-    raise NotImplementedError("TODO(student): write metrics.json")
+    results = {**metrics, **extra}
+
+    missing_keys = set(METRICS_KEYS) - results.keys()
+    if missing_keys:
+        raise ValueError(f"Missing required keys: {missing_keys}")
+
+    results = {
+        key: results[key].item() if hasattr(results[key], "item")
+        else results[key]
+        for key in METRICS_KEYS
+    }
+
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with output_path.open("w", encoding="utf-8") as file:
+        json.dump(results, file, indent=2)
 
 
-# TODO(student)
+# TODO(Timmy)
 def run_baseline(config: dict[str, Any]) -> dict[str, Any]:
     """Run the whole baseline: load, clean, train, evaluate, and save the results.
 
@@ -173,7 +225,57 @@ def run_baseline(config: dict[str, Any]) -> dict[str, Any]:
         - The model must see the same columns, in the same order, at fit and at predict time.
         - Never pass TARGET in as a feature.
     """
-    raise NotImplementedError("TODO(student): wire the baseline together")
+    set_seed(config["seed"])
+
+    train_df, valid_df = load_split(config)
+
+    train_df = clean_application(train_df)
+    valid_df = clean_application(valid_df)
+
+    target_col = config["target_col"]
+
+    numeric_cols, categorical_cols = get_feature_columns(
+        train_df, config
+    )
+    feature_cols = numeric_cols + categorical_cols
+
+    X_train = train_df[feature_cols]
+    y_train = train_df[target_col]
+
+    X_valid = valid_df[feature_cols]
+    y_valid = valid_df[target_col]
+
+    preprocessor = build_preprocessor(numeric_cols, categorical_cols)
+    model = build_model(config, preprocessor)
+    model.fit(X_train, y_train)
+
+
+    positive_class_index = list(model.classes_).index(1)
+    y_prob = model.predict_proba(X_valid)[:, positive_class_index]
+
+    metrics = evaluate(y_valid, y_prob)
+
+    extra = {
+        "model": MODEL_NAME,
+        "n_train": int(len(train_df)),
+        "n_valid": int(len(valid_df)),
+        "valid_default_rate": float(y_valid.mean()),
+        "seed": int(config["seed"]),
+    }
+
+    write_metrics(
+        metrics,
+        extra,
+        config["paths"]["metrics_file"],
+    )
+
+    return {
+        key: (
+            value.item() if hasattr(value, "item") else value
+        )
+        for key, value in {**metrics, **extra}.items()
+        if key in METRICS_KEYS
+    }
 
 # PROVIDED
 def main() -> None:
