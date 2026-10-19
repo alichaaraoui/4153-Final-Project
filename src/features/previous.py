@@ -11,9 +11,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from src.features.common import (  # noqa: F401  (helpers for you to use)
-    SENTINEL,
-    count_where,
+from src.features.common import (
     replace_sentinel,
     require_columns,
     share_where,
@@ -41,7 +39,6 @@ POS_CASH_FEATURES = [
 ]
 
 
-# TODO(student)
 def aggregate_previous(previous: pd.DataFrame, id_col: str = "SK_ID_CURR") -> pd.DataFrame:
     """Summarize each applicant's earlier applications at Home Credit into one row.
 
@@ -74,10 +71,29 @@ def aggregate_previous(previous: pd.DataFrame, id_col: str = "SK_ID_CURR") -> pd
           same applicant, so the tie-break matters if you want the same answer every run.
         - Do not change the input DataFrame.
     """
-    raise NotImplementedError("TODO(student): aggregate previous_application per applicant")
 
+    required = [id_col if col == "SK_ID_CURR" else col for col in PREVIOUS_COLUMNS]
+    require_columns(previous, required, "previous_application")
+    cleaned = replace_sentinel(previous, PREVIOUS_DAY_COLUMNS)
+    out = cleaned.groupby(id_col).agg(
+        PREV_COUNT=("SK_ID_PREV", "size"),
+        PREV_AMT_APPLICATION_MEAN=("AMT_APPLICATION", "mean"),
+        PREV_AMT_CREDIT_MEAN=("AMT_CREDIT", "mean"),
+        PREV_DAYS_DECISION_MAX=("DAYS_DECISION", "max"),
+        PREV_DAYS_TERMINATION_MEAN=("DAYS_TERMINATION", "mean"),
+    )
+    keys = cleaned[id_col]
+    status = cleaned["NAME_CONTRACT_STATUS"]
+    out["PREV_APPROVED_RATE"] = share_where(status.eq("Approved").fillna(False), keys)
+    out["PREV_REFUSED_RATE"] = share_where(status.eq("Refused").fillna(False), keys)
 
-# TODO(student)  (carry-over: finish before the next class)
+    # Known decision dates outrank missing dates; larger loan IDs break date ties.
+    latest = cleaned.sort_values(
+        [id_col, "DAYS_DECISION", "SK_ID_PREV"], na_position="first"
+    ).drop_duplicates(id_col, keep="last")
+    out["PREV_LAST_STATUS"] = latest.set_index(id_col)["NAME_CONTRACT_STATUS"]
+    return out.reset_index()[[id_col, *PREVIOUS_FEATURES]]
+
 def aggregate_pos_cash(pos_cash: pd.DataFrame, id_col: str = "SK_ID_CURR") -> pd.DataFrame:
     """Summarize the monthly history of each applicant's earlier POS and cash loans.
 
@@ -101,4 +117,20 @@ def aggregate_pos_cash(pos_cash: pd.DataFrame, id_col: str = "SK_ID_CURR") -> pd
           applicant (the same two-stage idea as bureau_balance).
         - Watch the denominators: POS_LATE_SHARE is over months, POS_COMPLETED_SHARE over loans.
     """
-    raise NotImplementedError("TODO(student): aggregate POS_CASH_balance per applicant")
+    required = [id_col if col == "SK_ID_CURR" else col for col in POS_CASH_COLUMNS]
+    require_columns(pos_cash, required, "POS_CASH_balance")
+    out = pos_cash.groupby(id_col).agg(
+        POS_LOAN_COUNT=("SK_ID_PREV", "nunique"),
+        POS_MONTHS_COUNT=("SK_ID_PREV", "size"),
+        POS_DPD_MAX=("SK_DPD", "max"),
+        POS_DPD_MEAN=("SK_DPD", "mean"),
+    )
+    out["POS_LATE_SHARE"] = share_where(
+        pos_cash["SK_DPD"].gt(0).fillna(False), pos_cash[id_col]
+    )
+
+    # Each loan contributes once, regardless of how many monthly records it has.
+    completed = pos_cash["NAME_CONTRACT_STATUS"].eq("Completed").fillna(False)
+    per_loan = completed.groupby([pos_cash[id_col], pos_cash["SK_ID_PREV"]]).any()
+    out["POS_COMPLETED_SHARE"] = per_loan.groupby(level=0).mean()
+    return out.reset_index()[[id_col, *POS_CASH_FEATURES]]
