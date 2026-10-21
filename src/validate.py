@@ -139,7 +139,27 @@ def application_schema() -> pa.DataFrameSchema:
           most rules. For DAYS_EMPLOYED write your own:
           ``pa.Check(lambda s: ..., error="...")`` where the lambda returns True/False per row.
     """
-    raise NotImplementedError("TODO(student): write the application_train schema")
+    columns = required_columns([
+        "SK_ID_CURR",
+        "TARGET",
+        "AMT_INCOME_TOTAL",
+        "AMT_CREDIT",
+        "AMT_ANNUITY",
+        "AMT_GOODS_PRICE",
+        "DAYS_BIRTH",
+        "DAYS_EMPLOYED",
+    ])
+    columns.update({
+        "SK_ID_CURR": pa.Column(nullable=False, unique=True),
+        "TARGET": pa.Column(checks=pa.Check.isin([0,1]), nullable=False),
+        "AMT_INCOME_TOTAL": pa.Column(checks=pa.Check.ge(0), nullable=False),
+        "AMT_CREDIT": pa.Column(checks=pa.Check.ge(0), nullable=False),
+        "AMT_ANNUITY": pa.Column(checks=pa.Check.ge(0), nullable=True),
+        "AMT_GOODS_PRICE": pa.Column(checks=pa.Check.ge(0), nullable=True),
+        "DAYS_BIRTH": pa.Column(checks=pa.Check.le(0), nullable=False),
+        "DAYS_EMPLOYED": pa.Column(checks=pa.Check(lambda s: (s == DAYS_EMPLOYED_SENTINEL) | (s <= 0)), nullable=False),
+        })
+    return pa.DataFrameSchema(columns)
 
 
 # TODO(student)
@@ -161,7 +181,38 @@ def child_schemas() -> dict[str, pa.DataFrameSchema]:
         - bureau_balance has no SK_ID_CURR; its id is SK_ID_BUREAU.
         - SK_ID_PREV repeats in the monthly tables (one row per month), so it is not unique.
     """
-    raise NotImplementedError("TODO(student): write the child table schemas")
+    schemas = {
+        "bureau": bureau_schema(),
+        "bureau_balance": pa.DataFrameSchema({
+            "SK_ID_BUREAU": pa.Column(nullable=False),
+            "MONTHS_BALANCE": pa.Column(nullable=False),
+            "STATUS": pa.Column(checks=pa.Check.isin(BUREAU_BALANCE_STATUSES), nullable=False),
+        }),
+        "previous_application": pa.DataFrameSchema({
+            "SK_ID_PREV": pa.Column(nullable=False),
+            "NAME_CONTRACT_STATUS": pa.Column(checks=pa.Check.isin(PREVIOUS_STATUSES), nullable=False),
+        }),
+        "POS_CASH_balance": pa.DataFrameSchema({
+            "SK_DPD": pa.Column(checks=pa.Check.greater_than_or_equal_to(0))
+        }),
+        "installments_payments": pa.DataFrameSchema({
+            "SK_ID_CURR": pa.Column(nullable=False),
+            "SK_ID_PREV": pa.Column(nullable=False),
+            "AMT_INSTALMENT": pa.Column(
+                checks=pa.Check.greater_than_or_equal_to(0), nullable=True
+            ),
+            "AMT_PAYMENT": pa.Column(
+                checks=pa.Check.greater_than_or_equal_to(0), nullable=True
+            ),
+        }),
+        "credit_card_balance": pa.DataFrameSchema({
+            "AMT_CREDIT_LIMIT_ACTUAL": pa.Column(checks=pa.Check.greater_than_or_equal_to(0)),
+            "SK_DPD": pa.Column(checks=pa.Check.greater_than_or_equal_to(0))
+        })
+    }
+
+    return schemas
+    
 
 
 # TODO(student)
