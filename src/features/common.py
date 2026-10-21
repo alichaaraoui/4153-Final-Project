@@ -88,3 +88,15 @@ def share_where(condition: pd.Series, keys: pd.Series) -> pd.Series:
     Every row counts in the denominator, so a key with 2 matches out of 8 rows gets 0.25.
     """
     return condition.astype(float).groupby(keys).mean()
+
+
+# PROVIDED
+def safe_divide(numerator: pd.Series, denominator: pd.Series) -> pd.Series:
+    """Divide element by element, giving NaN (never inf) where the denominator is 0 or missing.
+
+    A credit limit of 0 or an income of 0 does not make a ratio infinite: it makes it
+    undefined, and the model pipeline's imputer knows how to handle NaN, not inf.
+    """
+    numerator = numerator.astype(float)
+    denominator = denominator.astype(float)
+    return numerator / denominator.where(denominator != 0)

@@ -8,15 +8,17 @@ Usage (from the repository root):
     python run.py sample       build the 5,000-applicant sample
     python run.py summary      write reports/table_summary.json
     python run.py baseline     train the baseline and write reports/metrics.json
+    python run.py features     build and validate data/features/features.parquet
     python run.py compare      baseline on growing feature sets -> reports/auc_comparison.json
     python run.py test         run the tests
     python run.py lint         check code style
-    python run.py check        run the Week 2 checks
+    python run.py check        run the Week 2 checks (--stage wed: only the Wednesday checkpoint)
     python run.py check1       run the Week 1 checks
-    python run.py all          sample (if missing), summary, baseline, compare, then check
+    python run.py all          sample (if missing), summary, baseline, features, compare, check
 
 Options for ``sample``: ``--force`` rebuilds an existing sample, and ``--raw-dir PATH`` uses
 a full download in another folder instead of data/raw.
+Options for ``features``: ``--sample-dir PATH`` reads the tables from another folder.
 
 Each command runs the plain ``python -m ...`` command printed before it, so you can always
 run that command yourself instead.
@@ -39,17 +41,19 @@ COMMANDS = {
     "sample": "build the 5,000-applicant sample (--force, --raw-dir PATH)",
     "summary": "write reports/table_summary.json",
     "baseline": "train the baseline and write reports/metrics.json",
+    "features": "build and validate data/features/features.parquet (--sample-dir PATH)",
     "compare": "baseline on growing feature sets -> reports/auc_comparison.json",
     "test": "run the tests",
     "lint": "check code style",
     "check": "run the Week 2 checks",
     "check1": "run the Week 1 checks",
-    "all": "sample (if missing), summary, baseline, compare, then check",
+    "all": "sample (if missing), summary, baseline, features, compare, check",
 }
 MODULES = {
     "sample": ["-m", "scripts.make_sample"],
     "summary": ["-m", "src.summarize"],
     "baseline": ["-m", "src.baseline"],
+    "features": ["-m", "src.make_features"],
     "compare": ["-m", "src.compare"],
     "test": ["-m", "pytest"],
     "lint": ["-m", "ruff", "check", "."],
@@ -91,7 +95,7 @@ def setup() -> int:
 def run_all() -> int:
     """Run the whole path so far in order, stopping at the first failure."""
     steps = ([] if SAMPLE_FILE.exists() else ["sample"]) + [
-        "summary", "baseline", "compare", "check",
+        "summary", "baseline", "features", "compare", "check",
     ]
     for step in steps:
         code = run([python(), *MODULES[step]])

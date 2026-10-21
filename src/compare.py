@@ -6,7 +6,8 @@ Run it with ``python run.py compare`` or ``python -m src.compare``. For each fea
 config/features.yaml it:
 
 1. aggregates the listed child tables (your functions in src/features/),
-2. joins them onto the application table (your ``join_features``),
+2. joins them onto the application table (your ``join_features``), adding the ratio
+   features when the set lists "ratios",
 3. trains YOUR Week 1 pipeline from src/baseline.py on the train split only, and
 4. scores the validation split with YOUR ``evaluate``.
 
@@ -29,12 +30,15 @@ from src.data import load_application, load_table
 from src.features.bureau import aggregate_bureau, aggregate_bureau_balance
 from src.features.common import load_week2_config
 from src.features.join import join_features
+from src.features.payments import aggregate_credit_card, aggregate_installments
 from src.features.previous import aggregate_pos_cash, aggregate_previous
+from src.features.ratios import add_ratio_features
 from src.metrics import evaluate
 from src.uncertainty import bootstrap_auc_ci, bootstrap_auc_diff_ci
 from src.utils import DEFAULT_CONFIG, set_seed
 
 BASELINE_SET = "application"
+RATIOS = "ratios"  # not a table: adds the ratio features after the join
 
 
 # PROVIDED
@@ -50,6 +54,10 @@ def build_aggregate(table: str, config: dict[str, Any]) -> pd.DataFrame:
         return aggregate_previous(load_table("previous_application", config), id_col)
     if table == "POS_CASH_balance":
         return aggregate_pos_cash(load_table("POS_CASH_balance", config), id_col)
+    if table == "installments_payments":
+        return aggregate_installments(load_table("installments_payments", config), id_col)
+    if table == "credit_card_balance":
+        return aggregate_credit_card(load_table("credit_card_balance", config), id_col)
     raise KeyError(f"No aggregation for table '{table}' yet")
 
 
@@ -95,10 +103,13 @@ def run_comparison(config: dict[str, Any]) -> dict[str, Any]:
     aggregates: dict[str, pd.DataFrame] = {}
     results, baseline_scores = [], None
     for name, tables in feature_sets.items():
-        for table in tables:
+        child_tables = [t for t in tables if t != RATIOS]
+        for table in child_tables:
             if table not in aggregates:
                 aggregates[table] = build_aggregate(table, config)
-        joined = join_features(app, {t: aggregates[t] for t in tables}, config["id_col"])
+        joined = join_features(app, {t: aggregates[t] for t in child_tables}, config["id_col"])
+        if RATIOS in tables:
+            joined = add_ratio_features(joined)
         y_valid, scores, n_features = score_feature_set(joined, config)
         if baseline_scores is None:
             baseline_scores = scores

@@ -1,10 +1,10 @@
-"""Week 2 checks (Monday checkpoint). Prints a PASS/FAIL table and exits non-zero on a failure.
+"""Week 2 checks. Prints a PASS/FAIL table and exits non-zero if a required check fails.
 
 # DO NOT EDIT: the instructor uses this exact script at checkpoints.
 
-Run it with ``python run.py check`` or ``python -m scripts.check_week2``.
+Run it with ``python run.py check`` (everything the Week 2 submission needs) or
+``python run.py check --stage wed`` (only what the Wednesday checkpoint needs).
 Passing these checks shows your files exist and look plausible. It does not grade them.
-The INFO rows track the carry-over work; they are not required for this checkpoint.
 """
 
 from __future__ import annotations
@@ -22,20 +22,22 @@ import pandas as pd
 
 from scripts.make_sample import sample_hash
 from src.data import load_application, load_table
-from src.features.bureau import BUREAU_BALANCE_FEATURES, aggregate_bureau, aggregate_bureau_balance
-from src.features.common import SENTINEL, load_week2_config
-from src.features.join import join_features
-from src.features.previous import (
-    POS_CASH_FEATURES,
-    PREVIOUS_FEATURES,
-    aggregate_pos_cash,
-    aggregate_previous,
+from src.features.bureau import BUREAU_BALANCE_FEATURES, aggregate_bureau_balance
+from src.features.common import load_week2_config
+from src.features.payments import (
+    CREDIT_CARD_FEATURES,
+    INSTALLMENTS_FEATURES,
+    aggregate_credit_card,
+    aggregate_installments,
 )
+from src.features.previous import POS_CASH_FEATURES, aggregate_pos_cash
+from src.make_features import EXPECTED_FEATURES, build_feature_table, load_tables
 from src.utils import DEFAULT_CONFIG
+from src.validate import DataValidationError
 
-REQUIRED_SETS = ("application", "application+bureau+previous")
-MIN_LEAKAGE_ROWS = 8
+CORRUPT_DIR = "data/corrupt"
 ANSWERS = {"yes", "no"}
+FEATURE_NAME = re.compile(r"[A-Z][A-Z0-9_]+")
 
 
 class CheckFailed(Exception):
@@ -54,55 +56,89 @@ def check_sample(config: dict[str, Any]) -> str:
 
 
 # DO NOT EDIT
-def check_week1_metrics(config: dict[str, Any]) -> str:
-    path = config["paths"]["metrics_file"]
-    if not path.exists():
-        raise CheckFailed("reports/metrics.json not found; finish Week 1 (python run.py baseline)")
-    return f"Week 1 roc_auc {json.loads(path.read_text())['roc_auc']:.3f}"
-
-
-# DO NOT EDIT
-def _unique_ids(df: pd.DataFrame, config: dict[str, Any], table: str) -> None:
+def _aggregate_check(run: Callable[[], pd.DataFrame], columns: list[str],
+                     config: dict[str, Any]) -> str:
+    out = run()
     id_col = config["id_col"]
-    if id_col not in df.columns:
-        raise CheckFailed(f"{table}: {id_col} must be a column, not the index")
-    if df[id_col].duplicated().any():
-        raise CheckFailed(f"{table}: {int(df[id_col].duplicated().sum())} duplicated ids")
-
-
-# DO NOT EDIT
-def check_previous(config: dict[str, Any]) -> str:
-    prev = aggregate_previous(load_table("previous_application", config), config["id_col"])
-    _unique_ids(prev, config, "aggregate_previous")
-    missing = [c for c in PREVIOUS_FEATURES if c not in prev.columns]
+    if id_col not in out.columns or out[id_col].duplicated().any():
+        raise CheckFailed(f"must return one row per applicant with {id_col} as a column")
+    missing = [c for c in columns if c not in out.columns]
     if missing:
         raise CheckFailed(f"missing columns {missing}")
-    for col in ("PREV_APPROVED_RATE", "PREV_REFUSED_RATE"):
-        if not prev[col].between(0, 1).all():
-            raise CheckFailed(f"{col} has values outside [0, 1]")
-    if (prev["PREV_DAYS_TERMINATION_MEAN"] > 0).any():
-        raise CheckFailed(f"PREV_DAYS_TERMINATION_MEAN is positive: is {SENTINEL} still in it?")
-    return f"{len(prev):,} applicants, {prev.shape[1] - 1} PREV_ features"
+    return f"{len(out):,} applicants"
 
 
 # DO NOT EDIT
-def check_join(config: dict[str, Any]) -> str:
-    id_col = config["id_col"]
-    app = load_application(config)
-    tables = {
-        "bureau": aggregate_bureau(load_table("bureau", config), id_col),
-        "previous_application": aggregate_previous(
-            load_table("previous_application", config), id_col),
-    }
-    joined = join_features(app, tables, id_col)
-    if len(joined) != len(app):
-        raise CheckFailed(f"{len(joined):,} rows for {len(app):,} applicants")
-    if joined[id_col].tolist() != app[id_col].tolist():
-        raise CheckFailed("applicant ids or their order changed in the join")
-    no_bureau = ~app[id_col].isin(tables["bureau"][id_col])
-    if joined.loc[no_bureau, "BUREAU_COUNT"].isna().any():
-        raise CheckFailed("BUREAU_COUNT is NaN for applicants without bureau records")
-    return f"{len(joined):,} rows x {joined.shape[1]} columns, one row per applicant"
+def check_bureau_balance(config: dict[str, Any]) -> str:
+    return _aggregate_check(lambda: aggregate_bureau_balance(
+        load_table("bureau_balance", config), load_table("bureau", config), config["id_col"]),
+        BUREAU_BALANCE_FEATURES, config)
+
+
+# DO NOT EDIT
+def check_pos_cash(config: dict[str, Any]) -> str:
+    return _aggregate_check(lambda: aggregate_pos_cash(
+        load_table("POS_CASH_balance", config), config["id_col"]), POS_CASH_FEATURES, config)
+
+
+# DO NOT EDIT
+def check_installments(config: dict[str, Any]) -> str:
+    return _aggregate_check(lambda: aggregate_installments(
+        load_table("installments_payments", config), config["id_col"]),
+        INSTALLMENTS_FEATURES, config)
+
+
+# DO NOT EDIT
+def check_credit_card(config: dict[str, Any]) -> str:
+    return _aggregate_check(lambda: aggregate_credit_card(
+        load_table("credit_card_balance", config), config["id_col"]),
+        CREDIT_CARD_FEATURES, config)
+
+
+# DO NOT EDIT
+def check_clean_build(config: dict[str, Any]) -> str:
+    try:
+        features = build_feature_table(load_tables(config, config["paths"]["sample_dir"]),
+                                       config)
+    except DataValidationError as err:
+        raise CheckFailed(f"validation fails on the clean sample: {err.problems[:3]}") from err
+    if len(features) != config["sample_size"]:
+        raise CheckFailed(f"{len(features):,} rows, expected {config['sample_size']:,}")
+    return f"{len(features):,} rows x {features.shape[1]} columns, validation passes"
+
+
+# DO NOT EDIT
+def check_feature_file(config: dict[str, Any]) -> str:
+    path = config["week2"]["paths"]["features_dir"] / "features.parquet"
+    if not path.exists():
+        raise CheckFailed("data/features/features.parquet not found; run python run.py features")
+    table = pd.read_parquet(path)
+    missing = [c for c in EXPECTED_FEATURES if c not in table.columns]
+    if missing:
+        raise CheckFailed(f"missing columns {missing[:5]}; rerun python run.py features")
+    report = config["week2"]["paths"]["reports_dir"] / "validation_sample.json"
+    if not report.exists() or json.loads(report.read_text())["status"] != "pass":
+        raise CheckFailed("reports/validation_sample.json missing or not 'pass'")
+    return f"features.parquet {len(table):,} rows, validation_sample.json: pass"
+
+
+# DO NOT EDIT
+def check_corrupt(config: dict[str, Any]) -> str:
+    corrupt_dir = config["root"] / CORRUPT_DIR
+    if not corrupt_dir.exists():
+        raise CheckFailed(f"{CORRUPT_DIR}/ not found (it is created in class)")
+    try:
+        build_feature_table(load_tables(config, corrupt_dir), config)
+    except DataValidationError as err:
+        report = config["week2"]["paths"]["reports_dir"] / "validation_corrupt.json"
+        if not report.exists():
+            raise CheckFailed("run python run.py features --sample-dir data/corrupt to write "
+                              "reports/validation_corrupt.json") from err
+        return f"fails loudly with {len(err.problems)} problem(s) listed"
+    except Exception as err:
+        raise CheckFailed(f"crashed with {type(err).__name__} instead of listing the problems "
+                          f"({err})") from err
+    raise CheckFailed("the corrupted data passed validation")
 
 
 # DO NOT EDIT
@@ -111,52 +147,54 @@ def check_comparison(config: dict[str, Any]) -> str:
     if not path.exists():
         raise CheckFailed("reports/auc_comparison.json not found; run python run.py compare")
     rows = {r["feature_set"]: r for r in json.loads(path.read_text())["results"]}
-    missing = [name for name in REQUIRED_SETS if name not in rows]
+    missing = [name for name in config["week2"]["feature_sets"] if name not in rows]
     if missing:
-        raise CheckFailed(f"feature sets missing: {missing}")
+        raise CheckFailed(f"feature sets missing: {missing}; rerun python run.py compare")
     week1 = json.loads(config["paths"]["metrics_file"].read_text())["roc_auc"]
-    base = rows["application"]["roc_auc"]
-    if abs(base - week1) > 1e-6:
-        raise CheckFailed(f"'application' roc_auc {base:.4f} differs from metrics.json "
-                          f"{week1:.4f}; rerun python run.py baseline, then compare")
-    new = rows["application+bureau+previous"]
-    low, high = new["delta_ci"]
-    return f"{base:.3f} -> {new['roc_auc']:.3f} (change {new['delta_roc_auc']:+.3f}, " \
-           f"95% CI [{low:+.3f}, {high:+.3f}])"
+    if abs(rows["application"]["roc_auc"] - week1) > 1e-6:
+        raise CheckFailed("'application' roc_auc differs from metrics.json; rerun baseline, "
+                          "then compare")
+    last = list(rows.values())[-1]
+    low, high = last["delta_ci"]
+    return (f"{rows['application']['roc_auc']:.3f} -> {last['roc_auc']:.3f} with everything "
+            f"(change {last['delta_roc_auc']:+.3f}, 95% CI [{low:+.3f}, {high:+.3f}])")
+
+
+# DO NOT EDIT
+def _table_rows(path: Path) -> dict[str, list[str]]:
+    """Feature name -> its cells, for every markdown table row that starts with a feature."""
+    rows = {}
+    for line in path.read_text().splitlines():
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) >= 4 and FEATURE_NAME.fullmatch(cells[0]):
+            rows[cells[0]] = cells
+    return rows
 
 
 # DO NOT EDIT
 def check_leakage_table(config: dict[str, Any]) -> str:
-    path: Path = config["week2"]["paths"]["leakage_table"]
+    path = config["week2"]["paths"]["leakage_table"]
     if not path.exists():
         raise CheckFailed("docs/leakage_table.md not found; copy docs/leakage_table_template.md")
-    answered = 0
-    for line in path.read_text().splitlines():
-        cells = [c.strip() for c in line.strip().strip("|").split("|")]
-        if len(cells) < 4 or not re.fullmatch(r"[A-Z][A-Z0-9_]+", cells[0]):
-            continue
-        reason = cells[3]
-        if cells[2].lower() in ANSWERS and reason and "TODO" not in reason:
-            answered += 1
-    if answered < MIN_LEAKAGE_ROWS:
-        raise CheckFailed(f"{answered} features answered (Yes/No plus a reason); "
-                          f"need at least {MIN_LEAKAGE_ROWS} to start")
-    return f"{answered} features answered"
+    rows = _table_rows(path)
+    unanswered = [f for f in EXPECTED_FEATURES if f not in rows
+                  or rows[f][2].lower() not in ANSWERS or "TODO" in rows[f][3] or not rows[f][3]]
+    if unanswered:
+        raise CheckFailed(f"{len(unanswered)} feature(s) not answered, e.g. {unanswered[:3]}")
+    return f"all {len(EXPECTED_FEATURES)} features answered"
 
 
 # DO NOT EDIT
-def carry_over(run: Callable[[], pd.DataFrame], columns: list[str]) -> str:
-    """INFO only: report whether a carry-over aggregation works yet."""
-    try:
-        out = run()
-    except NotImplementedError:
-        return "not started"
-    except Exception as err:
-        return f"error: {type(err).__name__}: {err}"
-    missing = [c for c in columns if c not in out.columns]
+def check_feature_dictionary(config: dict[str, Any]) -> str:
+    path = config["week2"]["paths"]["feature_dictionary"]
+    if not path.exists():
+        raise CheckFailed("docs/feature_dictionary.md not found; copy the template")
+    rows = _table_rows(path)
+    missing = [f for f in EXPECTED_FEATURES if f not in rows
+               or any("TODO" in cell or not cell for cell in rows[f][1:4])]
     if missing:
-        return f"runs, but missing columns {missing}"
-    return f"runs: {len(out):,} applicants"
+        raise CheckFailed(f"{len(missing)} feature(s) not described, e.g. {missing[:3]}")
+    return f"all {len(EXPECTED_FEATURES)} features described"
 
 
 # DO NOT EDIT
@@ -170,13 +208,21 @@ def count_commit_authors(root: Path) -> str:
     return f"{len(authors)} distinct commit author(s)"
 
 
-REQUIRED_CHECKS: list[tuple[str, Callable[[dict[str, Any]], str]]] = [
+Check = tuple[str, Callable[[dict[str, Any]], str]]
+WEDNESDAY: list[Check] = [
     ("sample", check_sample),
-    ("week 1 baseline", check_week1_metrics),
-    ("previous agg", check_previous),
-    ("join", check_join),
+    ("bureau_balance", check_bureau_balance),
+    ("POS_CASH", check_pos_cash),
+    ("installments", check_installments),
+    ("credit card", check_credit_card),
+    ("clean build", check_clean_build),
+    ("feature file", check_feature_file),
+    ("corrupt data", check_corrupt),
+]
+SUBMISSION: list[Check] = WEDNESDAY + [
     ("auc comparison", check_comparison),
     ("leakage table", check_leakage_table),
+    ("feature dict", check_feature_dictionary),
 ]
 
 
@@ -184,14 +230,16 @@ REQUIRED_CHECKS: list[tuple[str, Callable[[dict[str, Any]], str]]] = [
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the Week 2 checks.")
     parser.add_argument("--config", default=DEFAULT_CONFIG, help="path to config.yaml")
+    parser.add_argument("--stage", choices=["wed", "all"], default="all",
+                        help="wed: the Wednesday checkpoint only; all: the full submission")
     args = parser.parse_args()
     config = load_week2_config(args.config)
-    id_col = config["id_col"]
+    checks = WEDNESDAY if args.stage == "wed" else SUBMISSION
 
     failed = 0
-    print(f"{'check':<18}{'result':<7}details")
+    print(f"{'check':<16}{'result':<7}details")
     print("-" * 80)
-    for name, check in REQUIRED_CHECKS:
+    for name, check in checks:
         try:
             status, detail = "PASS", check(config)
         except CheckFailed as err:
@@ -203,16 +251,8 @@ def main() -> None:
         except Exception as err:  # a crash is a failure too, with the reason shown
             status, detail = "FAIL", f"{type(err).__name__}: {err}"
             failed += 1
-        print(f"{name:<18}{status:<7}{detail}")
-
-    bb = carry_over(lambda: aggregate_bureau_balance(
-        load_table("bureau_balance", config), load_table("bureau", config), id_col),
-        BUREAU_BALANCE_FEATURES)
-    pos = carry_over(lambda: aggregate_pos_cash(
-        load_table("POS_CASH_balance", config), id_col), POS_CASH_FEATURES)
-    print(f"{'bureau_balance':<18}{'INFO':<7}carry-over: {bb}")
-    print(f"{'POS_CASH':<18}{'INFO':<7}carry-over: {pos}")
-    print(f"{'git authors':<18}{'INFO':<7}{count_commit_authors(config['root'])}")
+        print(f"{name:<16}{status:<7}{detail}")
+    print(f"{'git authors':<16}{'INFO':<7}{count_commit_authors(config['root'])}")
     print("-" * 80)
     print("All required checks passed." if not failed else f"{failed} required check(s) failed.")
     sys.exit(1 if failed else 0)

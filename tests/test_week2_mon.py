@@ -1,4 +1,4 @@
-"""Week 2 Monday tests. Tests of TODO(student) functions fail until you write them.
+"""Week 2 Monday tests (Wednesday edition: the compare test uses the new feature set names).
 
 # DO NOT EDIT: do not change, skip, or loosen these tests to make them pass.
 
@@ -216,7 +216,7 @@ def test_compare_application_set_matches_week1_baseline(tmp_path):
     rows = {r["feature_set"]: r for r in report["results"]}
     assert rows["application"]["roc_auc"] == pytest.approx(week1["roc_auc"])
     assert rows["application"]["delta_roc_auc"] == 0.0
-    both = rows["application+bureau+previous"]
+    both = rows["+previous_application"]  # application + bureau + previous_application
     assert both["n_features"] > rows["application"]["n_features"]
     low, high = both["roc_auc_ci"]
     assert low <= both["roc_auc"] <= high

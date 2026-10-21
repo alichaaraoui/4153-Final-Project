@@ -5,6 +5,9 @@
 The small tables are tiny on purpose: you can work out every expected number by hand.
 Applicant 1 has history everywhere, 2 has a little, 3 has no bureau records, 4 has only
 "C"/"X" monthly statuses, and 5 has no history at all.
+
+The larger generated tables (500 applicants, all seven tables) feed the end-to-end tests of
+compare and make_features.
 """
 
 from __future__ import annotations
@@ -85,6 +88,64 @@ def small_pos_cash() -> pd.DataFrame:
 
 
 # DO NOT EDIT
+def small_installments() -> pd.DataFrame:
+    """Applicant 1: one early, one 10 days late, one underpaid, one never paid.
+    Applicant 2: one payment 20 days late and overpaid. Applicant 3: one early payment."""
+    return pd.DataFrame({
+        "SK_ID_PREV": [101, 101, 101, 105, 201, 301],
+        "SK_ID_CURR": [1, 1, 1, 1, 2, 3],
+        "NUM_INSTALMENT_NUMBER": [1, 2, 3, 1, 1, 1],
+        "DAYS_INSTALMENT": [-100, -70, -40, -10, -30, -50],
+        "DAYS_ENTRY_PAYMENT": [-105, -60, -40, NAN, -10, -55],
+        "AMT_INSTALMENT": [100.0, 100.0, 100.0, 50.0, 200.0, 10.0],
+        "AMT_PAYMENT": [100.0, 100.0, 80.0, NAN, 250.0, 10.0],
+    })
+
+
+# DO NOT EDIT
+def small_credit_card() -> pd.DataFrame:
+    """Applicant 1: three months on a 1,000 limit (one overpaid). Applicant 2: limit 0."""
+    return pd.DataFrame({
+        "SK_ID_PREV": [901, 901, 901, 902, 902],
+        "SK_ID_CURR": [1, 1, 1, 2, 2],
+        "MONTHS_BALANCE": [-3, -2, -1, -2, -1],
+        "AMT_BALANCE": [500.0, 900.0, -10.0, 300.0, 200.0],
+        "AMT_CREDIT_LIMIT_ACTUAL": [1000.0, 1000.0, 1000.0, 0.0, 0.0],
+        "AMT_DRAWINGS_CURRENT": [100.0, 0.0, 0.0, 50.0, 0.0],
+        "SK_DPD": [0, 3, 0, 0, 0],
+    })
+
+
+# DO NOT EDIT
+def small_application_full() -> pd.DataFrame:
+    """Five applicants with every column the ratio features and the input schema read."""
+    return pd.DataFrame({
+        "SK_ID_CURR": [3, 1, 2, 5, 4],
+        "TARGET": [0, 1, 0, 0, 1],
+        "AMT_INCOME_TOTAL": [100000.0, 200000.0, 50000.0, 80000.0, 120000.0],
+        "AMT_CREDIT": [300000.0, 400000.0, 100000.0, 80000.0, 240000.0],
+        "AMT_ANNUITY": [15000.0, 20000.0, NAN, 4000.0, 12000.0],
+        "AMT_GOODS_PRICE": [270000.0, 400000.0, 90000.0, NAN, 200000.0],
+        "DAYS_BIRTH": [-12000, -15000, -9000, -20000, -11000],
+        "DAYS_EMPLOYED": [-1000, SENTINEL, -200, -3000, 0],
+    })
+
+
+# DO NOT EDIT
+def make_full_application(seed: int = 0) -> pd.DataFrame:
+    """The Week 1 synthetic applicants plus AMT_ANNUITY and AMT_GOODS_PRICE."""
+    rng = np.random.default_rng(seed)
+    app = make_application()
+    app["AMT_INCOME_TOTAL"] = app["AMT_INCOME_TOTAL"].clip(lower=20000)
+    n = len(app)
+    app["AMT_ANNUITY"] = np.where(rng.random(n) < 0.01, NAN,
+                                  np.round(app["AMT_CREDIT"] / rng.uniform(10, 30, n), 1))
+    app["AMT_GOODS_PRICE"] = np.where(rng.random(n) < 0.01, NAN,
+                                      np.round(app["AMT_CREDIT"] * 0.9, 1))
+    return app
+
+
+# DO NOT EDIT
 def make_week2_child_tables(ids: np.ndarray, seed: int = 0) -> dict[str, pd.DataFrame]:
     """Larger random child tables with every column the Week 2 aggregations read."""
     rng = np.random.default_rng(seed)
@@ -128,13 +189,46 @@ def make_week2_child_tables(ids: np.ndarray, seed: int = 0) -> dict[str, pd.Data
         "NAME_CONTRACT_STATUS": rng.choice(["Active", "Completed"], size=k, p=[0.9, 0.1]),
         "SK_DPD": np.where(rng.random(k) < 0.08, rng.integers(1, 60, size=k), 0),
     })
+    inst_loans = previous[["SK_ID_PREV", "SK_ID_CURR"]].sample(frac=0.6, random_state=seed + 1)
+    inst_n = rng.integers(1, 8, size=len(inst_loans))
+    k = int(inst_n.sum())
+    due = -rng.integers(2, 2900, size=k)
+    paid = np.where(rng.random(k) < 0.02, NAN, due + rng.integers(-20, 15, size=k))
+    amount_due = np.round(rng.lognormal(9, 1, size=k), 2)
+    installments = pd.DataFrame({
+        "SK_ID_PREV": np.repeat(inst_loans["SK_ID_PREV"].to_numpy(), inst_n),
+        "SK_ID_CURR": np.repeat(inst_loans["SK_ID_CURR"].to_numpy(), inst_n),
+        "NUM_INSTALMENT_NUMBER": np.concatenate([np.arange(1, m + 1) for m in inst_n]),
+        "DAYS_INSTALMENT": due,
+        "DAYS_ENTRY_PAYMENT": paid,
+        "AMT_INSTALMENT": amount_due,
+        "AMT_PAYMENT": np.where(np.isnan(paid), NAN,
+                                np.round(amount_due * rng.choice([1.0, 0.8], size=k,
+                                                                 p=[0.9, 0.1]), 2)),
+    })
+    card_owners = rng.choice(ids, size=len(ids) // 3, replace=False)
+    card_months = rng.integers(1, 12, size=len(card_owners))
+    k = int(card_months.sum())
+    limit = np.where(rng.random(len(card_owners)) < 0.2, 0.0,
+                     rng.choice([45000.0, 90000.0, 180000.0], size=len(card_owners)))
+    credit_card = pd.DataFrame({
+        "SK_ID_PREV": np.repeat(np.arange(3000000, 3000000 + len(card_owners)), card_months),
+        "SK_ID_CURR": np.repeat(card_owners, card_months),
+        "MONTHS_BALANCE": np.concatenate([-np.arange(1, m + 1) for m in card_months]),
+        "AMT_BALANCE": np.round(rng.uniform(0, 90000, size=k), 2),
+        "AMT_CREDIT_LIMIT_ACTUAL": np.repeat(limit, card_months),
+        "AMT_DRAWINGS_CURRENT": np.where(rng.random(k) < 0.7, 0.0,
+                                         np.round(rng.uniform(0, 20000, size=k), 2)),
+        "SK_DPD": np.where(rng.random(k) < 0.05, rng.integers(1, 40, size=k), 0),
+    })
     return {"bureau": bureau, "bureau_balance": bureau_balance,
-            "previous_application": previous, "POS_CASH_balance": pos_cash}
+            "previous_application": previous, "POS_CASH_balance": pos_cash,
+            "installments_payments": installments, "credit_card_balance": credit_card}
 
 
 # DO NOT EDIT
 def make_week2_project(root: Path, n_bootstrap: int = 50) -> dict[str, Any]:
-    """A temporary project: 500 synthetic applicants, the four Week 2 Monday tables, a split."""
+    """A temporary project: 500 synthetic applicants in all seven tables, and a split."""
     config_path = write_config(root, sample_size=500)
     shutil.copy(REPO_ROOT / "config" / "features.yaml", root / "config" / "features.yaml")
     config = load_week2_config(config_path)
@@ -142,7 +236,7 @@ def make_week2_project(root: Path, n_bootstrap: int = 50) -> dict[str, Any]:
     sample_dir = config["paths"]["sample_dir"]
     sample_dir.mkdir(parents=True)
 
-    app = make_application()
+    app = make_full_application()
     tables = {"application_train": app,
               **make_week2_child_tables(app["SK_ID_CURR"].to_numpy())}
     for name, df in tables.items():

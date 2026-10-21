@@ -1,6 +1,8 @@
 <!-- PROVIDED template. Copy it to docs/leakage_table.md and fill that copy in:
        cp docs/leakage_table_template.md docs/leakage_table.md      (Windows: copy ...)
      For each feature, answer Yes or No in the third column and give your reason in the fourth.
+     Already have docs/leakage_table.md from Monday? Copy the new INST_, CC_ and *_RATIO rows
+     from this template into it.
      Replace every "?" and every "TODO(student)". Keep the table format: python run.py check
      reads it. Add a row for every feature you create, including ones you add yourself. -->
 
@@ -52,6 +54,21 @@ future. One look at `df["COL"].max()` is better than an opinion.
 | POS_DPD_MEAN | POS_CASH_balance | ? | TODO(student) |
 | POS_LATE_SHARE | POS_CASH_balance | ? | TODO(student) |
 | POS_COMPLETED_SHARE | POS_CASH_balance | ? | TODO(student) |
+| INST_COUNT | installments_payments | ? | TODO(student) |
+| INST_LATE_SHARE | installments_payments | ? | TODO(student) |
+| INST_DAYS_LATE_MAX | installments_payments | ? | TODO(student) |
+| INST_UNDERPAID_SHARE | installments_payments | ? | TODO(student) |
+| INST_PAYMENT_DIFF_MEAN | installments_payments | ? | TODO(student) |
+| CC_MONTHS_COUNT | credit_card_balance | ? | TODO(student) |
+| CC_BALANCE_MEAN | credit_card_balance | ? | TODO(student) |
+| CC_UTILIZATION_MEAN | credit_card_balance | ? | TODO(student) |
+| CC_UTILIZATION_MAX | credit_card_balance | ? | TODO(student) |
+| CC_DRAWINGS_MEAN | credit_card_balance | ? | TODO(student) |
+| CC_DPD_MAX | credit_card_balance | ? | TODO(student) |
+| CREDIT_INCOME_RATIO | application_train | ? | TODO(student) |
+| ANNUITY_INCOME_RATIO | application_train | ? | TODO(student) |
+| CREDIT_GOODS_RATIO | application_train | ? | TODO(student) |
+| ANNUITY_CREDIT_RATIO | application_train | ? | TODO(student) |
 
 ## Application columns worth a second look
 
