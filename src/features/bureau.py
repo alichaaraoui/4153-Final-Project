@@ -114,4 +114,27 @@ def aggregate_bureau_balance(
           share: a credit with 2 months must not weigh as much as one with 60.
         - Credits in bureau without any monthly history must not be counted.
     """
-    raise NotImplementedError("TODO(student): aggregate bureau_balance in two stages")
+    require_columns(bureau_balance, BUREAU_BALANCE_COLUMNS, "bureau_balance")
+    require_columns(bureau, ["SK_ID_BUREAU", id_col], "bureau")
+
+    bureau_balance["STATUS_NUM"] = pd.to_numeric(bureau_balance["STATUS"], errors="coerce")
+    credit_agg = bureau_balance.groupby("SK_ID_BUREAU").agg(
+        BB_MONTHS_COUNT=("MONTHS_BALANCE", "count"),
+        BB_LATE_MONTHS_COUNT=("STATUS_NUM", lambda x: (x.between(1, 5)).sum()),
+        BB_WORST_STATUS=("STATUS_NUM", "max"),
+    )
+    merged = pd.merge(
+        credit_agg.reset_index(), bureau[[id_col, "SK_ID_BUREAU"]],
+        on="SK_ID_BUREAU", how="inner", validate="many_to_one"
+    )
+    applicant_agg = merged.groupby(id_col).agg(
+        BB_CREDIT_COUNT=("SK_ID_BUREAU", "count"),
+        BB_MONTHS_COUNT=("BB_MONTHS_COUNT", "sum"),
+        BB_LATE_MONTHS_COUNT=("BB_LATE_MONTHS_COUNT", "sum"),
+        BB_WORST_STATUS=("BB_WORST_STATUS", "max"),
+    )
+    applicant_agg["BB_LATE_SHARE"] = (
+        applicant_agg["BB_LATE_MONTHS_COUNT"] / applicant_agg["BB_MONTHS_COUNT"]
+    )
+
+    return applicant_agg.reset_index()
