@@ -247,7 +247,68 @@ def feature_schema(
         - A column can have several checks: ``checks=[pa.Check.ge(0), is_finite()]``.
         - Apply the missing-share limit to the suffix columns too (except ``_COUNT``).
     """
-    raise NotImplementedError("TODO(student): write the feature table schema")
+    if "default" not in null_limits:
+        raise ValueError("null_limits must have a 'default' entry")
+    if n_applicants < 0:
+        raise ValueError("n_applicants must be non-negative")
+    if not all(0 <= limit <= 1 for limit in null_limits.values()):
+        raise ValueError("null_limits must be between 0 and 1")
+    columns = {
+        'SK_ID_CURR': pa.Column(nullable=False, unique=True, required=True),
+    }
+    for feature in expected_features:
+        if feature == "SK_ID_CURR":
+            continue
+
+        limit = null_limits.get(feature, null_limits["default"])
+        checks = []
+
+        if feature.endswith("_COUNT"):
+            checks.append(pa.Check.ge(0))
+            nullable = False
+        else:
+            nullable = True
+
+            if feature.endswith(("_SHARE", "_RATE")):
+                checks.extend([
+                    pa.Check.ge(0),
+                    pa.Check.le(1),
+                ])
+
+            elif feature.endswith("_RATIO"):
+                checks.extend([
+                    pa.Check.ge(0),
+                    is_finite(),
+                ])
+
+            # Includes shares, rates, ratios, and ordinary features.
+            checks.append(max_null_share(limit))
+
+        columns[feature] = pa.Column(
+            checks=checks,
+            nullable=nullable,
+            required=True,
+        )
+
+    # Also check explicitly listed columns outside expected_features.
+    for column, limit in null_limits.items():
+        if column == "default" or column in columns:
+            continue
+
+        columns[column] = pa.Column(
+            checks=[max_null_share(limit)],
+            nullable=True,
+            required=True,
+        )
+
+    return pa.DataFrameSchema(
+        columns=columns,
+        checks=pa.Check(
+            lambda df: len(df) == n_applicants,
+            error=f"Expected exactly {n_applicants} applicant rows",
+        ),
+        strict=False,
+    )
 
 
 # PROVIDED

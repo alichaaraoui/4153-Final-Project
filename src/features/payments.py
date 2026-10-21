@@ -72,8 +72,31 @@ def aggregate_installments(
           "on time". Make the missing rows NaN before taking a share, so they drop out.
         - ``share_where`` uses every row as the denominator. Here you need a different one.
     """
-    raise NotImplementedError("TODO(student): aggregate installments_payments per applicant")
+    
+    required = [id_col if col == "SK_ID_CURR" else col for col in INSTALLMENTS_COLUMNS]
+    
+    require_columns(installments, required, "installments_payments")
+    
+    cleaned = installments.copy()
 
+    recorded = (cleaned["DAYS_ENTRY_PAYMENT"].notna()) & (cleaned["AMT_PAYMENT"].notna())
+
+    cleaned["late"] = ((cleaned["DAYS_ENTRY_PAYMENT"] > cleaned["DAYS_INSTALMENT"]).astype(float).where(recorded))
+
+    cleaned["days_late"] = ((cleaned['DAYS_ENTRY_PAYMENT'] - cleaned["DAYS_INSTALMENT"]).clip(lower=0).where(recorded))
+
+    cleaned["underpaid"] = ((cleaned["AMT_PAYMENT"] < cleaned["AMT_INSTALMENT"]).astype(float).where(recorded))
+
+    cleaned["payment_diff"] = cleaned["AMT_PAYMENT"] - cleaned["AMT_INSTALMENT"].where(recorded)
+
+    out = cleaned.groupby(id_col).agg(
+        INST_COUNT=("SK_ID_PREV", "size"),
+        INST_LATE_SHARE=("late", "mean"),
+        INST_DAYS_LATE_MAX=("days_late", "max"),
+        INST_UNDERPAID_SHARE=("underpaid", "mean"),
+        INST_PAYMENT_DIFF_MEAN=("payment_diff", "mean"),
+    )
+    return out.reset_index()[[id_col, *INSTALLMENTS_FEATURES]]
 
 # TODO(student)
 def aggregate_credit_card(
@@ -101,4 +124,21 @@ def aggregate_credit_card(
           there instead of inf, and pandas' mean and max skip NaN.
         - A balance can be slightly negative (the customer overpaid). Keep it.
     """
-    raise NotImplementedError("TODO(student): aggregate credit_card_balance per applicant")
+    required = [id_col if col == "SK_ID_CURR" else col for col in CREDIT_CARD_COLUMNS]
+    require_columns(credit_card, required, "credit_card_balance")
+    
+    cleaned = credit_card.copy()
+
+    positive_limit = cleaned["AMT_CREDIT_LIMIT_ACTUAL"].where(cleaned["AMT_CREDIT_LIMIT_ACTUAL"] > 0)
+
+    cleaned["utilization"] = safe_divide(cleaned["AMT_BALANCE"], positive_limit)
+
+    out = cleaned.groupby(id_col).agg(
+        CC_MONTHS_COUNT=("SK_ID_PREV", "size"),
+        CC_BALANCE_MEAN=("AMT_BALANCE", "mean"),
+        CC_UTILIZATION_MEAN=("utilization", "mean"),
+        CC_UTILIZATION_MAX=("utilization", "max"),
+        CC_DRAWINGS_MEAN=("AMT_DRAWINGS_CURRENT", "mean"),
+        CC_DPD_MAX=("SK_DPD", "max")
+    )
+    return out.reset_index()[[id_col, *CREDIT_CARD_FEATURES]]
