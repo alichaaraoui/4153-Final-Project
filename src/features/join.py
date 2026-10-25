@@ -99,8 +99,8 @@ def join_features(
         if id_col not in table.columns:
             raise ValueError(f"{table_name} is missing {id_col}")
         if table[id_col].duplicated().any():
-            raise ValueError(f"{table_name} has duplicate {id_col} values; it was probably not aggregated")
-    
+            raise ValueError(f"{table_name} has duplicate {id_col} values; it was not aggregated")
+
         for col in table.columns:
             if col == id_col:
                 continue
@@ -116,4 +116,5 @@ def join_features(
                 out[col] = out[col].fillna(0)
 
     assert_one_row_per_applicant(out, app[id_col], id_col=id_col)
+    
     return out

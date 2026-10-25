@@ -223,3 +223,8 @@ The tagged repo must contain:
 | "data/sample already exists" | Add `--force` to rebuild it. |
 | Sample hash mismatch in `python run.py check` | Restore `scripts/make_sample.py` and `config/config.yaml` from the template, then `python run.py sample --force`. |
 | Tests fail with `NotImplementedError` | Expected until you write that TODO. |
+
+
+## Table Contribution Analysis
+
+Adding the bureau table slightly decreased ROC-AUC from 0.710 to 0.707, while previous application and bureau balance increased it to 0.713 and 0.715, respectively. Adding POS_CASH, installments, and credit card data further increased ROC-AUC to 0.721, 0.726, and 0.731, with credit card data producing the largest improvement over the application-only baseline. However, every table's 95% confidence interval for the ROC-AUC change includes zero, so none of these individual gains is conclusive. Adding ratio features decreased ROC-AUC from 0.731 to 0.727, and its confidence interval for the change also includes zero. With only 81 defaults in the validation set, we cannot yet confidently determine which tables provide meaningful improvements.

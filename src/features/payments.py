@@ -72,11 +72,11 @@ def aggregate_installments(
           "on time". Make the missing rows NaN before taking a share, so they drop out.
         - ``share_where`` uses every row as the denominator. Here you need a different one.
     """
-    
+
     required = [id_col if col == "SK_ID_CURR" else col for col in INSTALLMENTS_COLUMNS]
-    
+
     require_columns(installments, required, "installments_payments")
-    
+
     cleaned = installments.copy()
 
     recorded = (cleaned["DAYS_ENTRY_PAYMENT"].notna()) & (cleaned["AMT_PAYMENT"].notna())
