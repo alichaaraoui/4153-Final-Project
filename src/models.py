@@ -124,7 +124,7 @@ def undersample(
     pos = np.flatnonzero(y.to_numpy() == 1)
     neg = np.flatnonzero(y.to_numpy() == 0)
     rng = np.random.default_rng(seed)
-    k = int(len(pos) * ratio)
+    k = min(len(neg), int(len(pos) * ratio))
     keep = np.sort(np.concatenate([pos, rng.choice(neg, size=k, replace=False)]))
     return X.iloc[keep].reset_index(drop=True), y.iloc[keep].reset_index(drop=True)
 
