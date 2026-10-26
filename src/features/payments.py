@@ -81,11 +81,14 @@ def aggregate_installments(
 
     recorded = (cleaned["DAYS_ENTRY_PAYMENT"].notna()) & (cleaned["AMT_PAYMENT"].notna())
 
-    cleaned["late"] = ((cleaned["DAYS_ENTRY_PAYMENT"] > cleaned["DAYS_INSTALMENT"]).astype(float).where(recorded))
+    paid_after_due = cleaned["DAYS_ENTRY_PAYMENT"] > cleaned["DAYS_INSTALMENT"]
+    cleaned["late"] = paid_after_due.astype(float).where(recorded)
 
-    cleaned["days_late"] = ((cleaned['DAYS_ENTRY_PAYMENT'] - cleaned["DAYS_INSTALMENT"]).clip(lower=0).where(recorded))
+    days_after_due = cleaned["DAYS_ENTRY_PAYMENT"] - cleaned["DAYS_INSTALMENT"]
+    cleaned["days_late"] = days_after_due.clip(lower=0).where(recorded)
 
-    cleaned["underpaid"] = ((cleaned["AMT_PAYMENT"] < cleaned["AMT_INSTALMENT"]).astype(float).where(recorded))
+    paid_less = cleaned["AMT_PAYMENT"] < cleaned["AMT_INSTALMENT"]
+    cleaned["underpaid"] = paid_less.astype(float).where(recorded)
 
     cleaned["payment_diff"] = cleaned["AMT_PAYMENT"] - cleaned["AMT_INSTALMENT"].where(recorded)
 
@@ -126,10 +129,11 @@ def aggregate_credit_card(
     """
     required = [id_col if col == "SK_ID_CURR" else col for col in CREDIT_CARD_COLUMNS]
     require_columns(credit_card, required, "credit_card_balance")
-    
+
     cleaned = credit_card.copy()
 
-    positive_limit = cleaned["AMT_CREDIT_LIMIT_ACTUAL"].where(cleaned["AMT_CREDIT_LIMIT_ACTUAL"] > 0)
+    limit = cleaned["AMT_CREDIT_LIMIT_ACTUAL"]
+    positive_limit = limit.where(limit > 0)
 
     cleaned["utilization"] = safe_divide(cleaned["AMT_BALANCE"], positive_limit)
 

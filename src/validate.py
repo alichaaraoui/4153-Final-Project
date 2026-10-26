@@ -157,7 +157,10 @@ def application_schema() -> pa.DataFrameSchema:
         "AMT_ANNUITY": pa.Column(checks=pa.Check.ge(0), nullable=True),
         "AMT_GOODS_PRICE": pa.Column(checks=pa.Check.ge(0), nullable=True),
         "DAYS_BIRTH": pa.Column(checks=pa.Check.le(0), nullable=False),
-        "DAYS_EMPLOYED": pa.Column(checks=pa.Check(lambda s: (s == DAYS_EMPLOYED_SENTINEL) | (s <= 0)), nullable=False),
+        "DAYS_EMPLOYED": pa.Column(
+            checks=pa.Check(lambda s: (s == DAYS_EMPLOYED_SENTINEL) | (s <= 0)),
+            nullable=False,
+        ),
         })
     return pa.DataFrameSchema(columns)
 
@@ -190,7 +193,9 @@ def child_schemas() -> dict[str, pa.DataFrameSchema]:
         }),
         "previous_application": pa.DataFrameSchema({
             "SK_ID_PREV": pa.Column(nullable=False),
-            "NAME_CONTRACT_STATUS": pa.Column(checks=pa.Check.isin(PREVIOUS_STATUSES), nullable=False),
+            "NAME_CONTRACT_STATUS": pa.Column(
+                checks=pa.Check.isin(PREVIOUS_STATUSES), nullable=False
+            ),
         }),
         "POS_CASH_balance": pa.DataFrameSchema({
             "SK_DPD": pa.Column(checks=pa.Check.greater_than_or_equal_to(0))
