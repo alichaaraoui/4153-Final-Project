@@ -116,5 +116,5 @@ def join_features(
                 out[col] = out[col].fillna(0)
 
     assert_one_row_per_applicant(out, app[id_col], id_col=id_col)
-    
+
     return out
