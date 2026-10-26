@@ -130,7 +130,27 @@ def tune_tree(data: TrainingData, config: dict[str, Any]) -> dict[str, Any]:
           "min_samples_leaf": leaf}}``.
         - Look at ``train_and_log`` for how to open a run with tags.
     """
-    raise NotImplementedError("TODO(student): grid-search the tree and train the winner")
+    tree_tuning = {**run_tags(config, data.data_version, "tree_tuning"), "spec": "grid search"}
+    with mlflow.start_run(run_name="tree_tuning", nested=False, tags=tree_tuning) as parent_run:
+        grid = config["week3"]["tree_grid"]
+        best_cv_auc = -1
+        best_spec = None
+        for max_depth, min_samples_leaf in itertools.product(grid["max_depth"], grid["min_samples_leaf"]):
+            spec = {"model": "decision_tree", "params": {"max_depth": max_depth, "min_samples_leaf": min_samples_leaf}}
+            run_name = f"tree_d{max_depth}_l{min_samples_leaf}"
+            result = train_and_log(run_name, spec, data, config, nested=True, log_model=False)
+            if result["cv_auc_mean"] > best_cv_auc:
+                best_cv_auc = result["cv_auc_mean"]
+                best_spec = spec
+
+        if best_spec is None:
+            raise ValueError("No best spec found during grid search.")
+
+        mlflow.log_params({"best_max_depth": best_spec["params"]["max_depth"],
+                        "best_min_samples_leaf": best_spec["params"]["min_samples_leaf"]})
+        mlflow.log_metric("best_cv_auc_mean", best_cv_auc)
+    
+    return train_and_log(TUNED_TREE, best_spec, data, config, nested=False, log_model=True)
 
 
 # PROVIDED
