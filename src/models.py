@@ -15,10 +15,10 @@ from typing import Any
 import numpy as np  # noqa: F401  (for you to use)
 import pandas as pd
 from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import HistGradientBoostingClassifier  # noqa: F401  (for you to use)
+from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OrdinalEncoder
-from sklearn.tree import DecisionTreeClassifier  # noqa: F401  (for you to use)
+from sklearn.tree import DecisionTreeClassifier
 
 from src.baseline import build_model, build_preprocessor
 
@@ -44,7 +44,6 @@ def tree_preprocessor(numeric_cols: list[str], categorical_cols: list[str]) -> C
     ])
 
 
-# TODO(student)
 def make_model(
     spec: dict[str, Any], numeric_cols: list[str], categorical_cols: list[str],
     config: dict[str, Any],
@@ -80,7 +79,20 @@ def make_model(
     name = spec["model"]
     if name == "logistic_regression":
         return build_model(config, build_preprocessor(numeric_cols, categorical_cols))
-    raise NotImplementedError("TODO(student): build the decision tree and boosting pipelines")
+    params = spec.get("params") or {}
+    if name == "decision_tree":
+        model = DecisionTreeClassifier(**params, random_state=config["seed"])
+    elif name == "hist_gradient_boosting":
+        model = HistGradientBoostingClassifier(**params, random_state=config["seed"])
+    else:
+        raise ValueError(
+            f"Unknown or unimplemented model {name!r}. MODEL_NAMES: {sorted(MODEL_NAMES)}"
+        )
+
+    return Pipeline([
+        ("preprocess", tree_preprocessor(numeric_cols, categorical_cols)),
+        ("model", model),
+    ])
 
 
 # TODO(student)
@@ -109,7 +121,12 @@ def undersample(
         - Only ever call this on TRAINING rows. ``fit_model`` and your
           ``cross_validate_auc`` make sure of that: never undersample a validation fold.
     """
-    raise NotImplementedError("TODO(student): keep all defaulters and ratio x as many others")
+    pos = np.flatnonzero(y.to_numpy() == 1)
+    neg = np.flatnonzero(y.to_numpy() == 0)
+    rng = np.random.default_rng(seed)
+    k = int(len(pos) * ratio)
+    keep = np.sort(np.concatenate([pos, rng.choice(neg, size=k, replace=False)]))
+    return X.iloc[keep].reset_index(drop=True), y.iloc[keep].reset_index(drop=True)
 
 
 # PROVIDED
@@ -134,4 +151,3 @@ def describe_spec(spec: dict[str, Any]) -> str:
     if spec.get("undersample"):
         changes["undersample"] = spec["undersample"]
     return ", ".join(f"{key}={changes[key]}" for key in sorted(changes))
-
