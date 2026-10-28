@@ -1,14 +1,14 @@
 {
   "study": "hgb-tuning",
-  "trial": 16,
-  "cv_auc_mean": 0.7436605342283235,
-  "n_trials": 20,
+  "trial": 22,
+  "cv_auc_mean": 0.747147367820456,
+  "n_trials": 35,
   "params": {
-    "learning_rate": 0.010169525877146807,
-    "max_iter": 300,
-    "max_leaf_nodes": 23,
-    "min_samples_leaf": 127,
-    "l2_regularization": 0.0010813747663476119,
-    "max_features": 0.9746076688061942
+    "learning_rate": 0.014375063326171738,
+    "max_iter": 200,
+    "max_leaf_nodes": 24,
+    "min_samples_leaf": 135,
+    "l2_regularization": 0.0013628823844677514,
+    "max_features": 0.8824495117535389
   }
 }
