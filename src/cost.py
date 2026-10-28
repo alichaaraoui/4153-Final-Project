@@ -61,7 +61,16 @@ def expected_cost(
         - ``y = np.asarray(y_true)``, ``reject = np.asarray(scores) >= threshold``.
         - Approved defaulters: ``(y == 1) & ~reject``. Rejected good: ``(y == 0) & reject``.
     """
-    raise NotImplementedError("TODO(student): the expected cost per applicant")
+    y = np.asarray(y_true)
+    reject = np.asarray(scores) >= threshold
+    approved_defaulters = (y == 1) & ~reject
+    rejected_good = (y == 0) & reject
+
+    total_cost = (
+        costs["approve_defaulter"] * np.sum(approved_defaulters)
+        + costs["reject_good"] * np.sum(rejected_good)
+    )
+    return total_cost / len(y)
 
 
 # TODO(student)
@@ -75,8 +84,30 @@ def cost_curve(
         ``reject_rate`` (share of applicants rejected), ``approved_defaulters`` and
         ``rejected_good`` (counts).
     """
-    raise NotImplementedError("TODO(student): one row per threshold")
+    y = np.asarray(y_true)
+    scores = np.asarray(scores)
+    thresholds = np.asarray(thresholds)
 
+    rows = []
+    for threshold in thresholds:
+        reject = scores >= threshold
+        approved_defaulters = (y == 1) & ~reject
+        rejected_good = (y == 0) & reject
+
+        total_cost = (
+            costs["approve_defaulter"] * np.sum(approved_defaulters)
+            + costs["reject_good"] * np.sum(rejected_good)
+        )
+
+        rows.append({
+            "threshold": threshold,
+            "expected_cost": total_cost / len(y),
+            "reject_rate": np.mean(reject),
+            "approved_defaulters": np.sum(approved_defaulters),
+            "rejected_good": np.sum(rejected_good),
+        })
+
+    return pd.DataFrame(rows)
 
 # TODO(student)
 def choose_threshold(curve: pd.DataFrame) -> float:
@@ -91,7 +122,9 @@ def choose_threshold(curve: pd.DataFrame) -> float:
     Returns:
         The chosen threshold, as a plain float.
     """
-    raise NotImplementedError("TODO(student): the cheapest threshold")
+    min_cost = curve["expected_cost"].min()
+    candidates = curve[curve["expected_cost"] == min_cost]
+    return float(candidates["threshold"].max())
 
 
 # PROVIDED
