@@ -1,6 +1,6 @@
 {
-  "created": "2026-11-02T20:13:09+00:00",
-  "git_commit": "e2862d4",
+  "created": "2026-11-02T20:33:49+00:00",
+  "git_commit": "c1d2231",
   "categories": {
     "unit": {
       "counts": {
@@ -36,8 +36,7 @@
     },
     "data": {
       "counts": {
-        "passed": 1,
-        "failed": 4
+        "passed": 5
       },
       "tests": [
         {
@@ -47,30 +46,30 @@
         },
         {
           "name": "test_schema",
-          "outcome": "failed",
-          "message": "Failed: TODO(student): write this test"
+          "outcome": "passed",
+          "message": ""
         },
         {
           "name": "test_value_ranges",
-          "outcome": "failed",
-          "message": "Failed: TODO(student): write this test"
+          "outcome": "passed",
+          "message": ""
         },
         {
           "name": "test_missing_values",
-          "outcome": "failed",
-          "message": "Failed: TODO(student): write this test"
+          "outcome": "passed",
+          "message": ""
         },
         {
           "name": "test_default_rate",
-          "outcome": "failed",
-          "message": "Failed: TODO(student): write this test"
+          "outcome": "passed",
+          "message": ""
         }
       ]
     },
     "model": {
       "counts": {
-        "passed": 2,
-        "failed": 2
+        "passed": 3,
+        "failed": 1
       },
       "tests": [
         {
@@ -85,13 +84,13 @@
         },
         {
           "name": "test_gender_does_not_change_the_score",
-          "outcome": "failed",
-          "message": "AssertionError: Some applicants' scores changed when gender was altered"
+          "outcome": "passed",
+          "message": ""
         },
         {
           "name": "test_higher_income_does_not_raise_risk",
           "outcome": "failed",
-          "message": "AssertionError: 139 applicants got riskier; largest increase 0.104"
+          "message": "KeyError: 'AMT_INCOME_TOTAL'"
         }
       ]
     }
