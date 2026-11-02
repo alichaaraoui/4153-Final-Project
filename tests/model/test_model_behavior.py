@@ -49,7 +49,16 @@ def test_application_weekday_does_not_change_the_score(production: ProductionMod
         - ``np.abs(score(model, changed) - score(model, X)).max()``.
         - Put the size of the largest change in the assert message.
     """
-    pytest.fail("TODO(student): write this test")
+    X = production.data.X_valid
+    changed = X.copy()
+
+    changed["WEEKDAY_APPR_PROCESS"] = "Monday"
+
+    increase = np.abs(score(production.model, changed) - score(production.model, X)).max()
+    assert increase <= TOLERANCE, f"largest change {increase:.3f} exceeds tolerance {TOLERANCE}"
+
+
+
 
 
 # TODO(student)
@@ -60,7 +69,21 @@ def test_gender_does_not_change_the_score(production: ProductionModel) -> None:
     not change a decision. Score every validation applicant as "F" and again as "M", and
     check that no score differs by more than 0.01.
     """
-    pytest.fail("TODO(student): write this test")
+    X = production.data.X_valid
+
+    changed = X.copy()
+
+    changed["CODE_GENDER"] = "F"
+
+    is_higher = np.abs(score(production.model, changed) - score(production.model, X)) > 0.01
+
+    assert not is_higher.any(), "Some applicants' scores changed when gender was altered"
+
+    changed["CODE_GENDER"] = "M"
+
+    is_higher = np.abs(score(production.model, changed) - score(production.model, X)) > 0.01
+
+    assert not is_higher.any(), "Some applicants' scores changed when gender was altered"
 
 
 # TODO(student)
@@ -75,4 +98,11 @@ def test_higher_income_does_not_raise_risk(production: ProductionModel) -> None:
         - ``increase = score(model, change_income(X, 1.5)) - score(model, X)``.
         - Report how many applicants got riskier, and the largest increase, in the message.
     """
-    pytest.fail("TODO(student): write this test")
+    X = production.data.X_valid
+
+    increase = score(production.model, change_income(X, 1.5)) - score(production.model, X)
+
+    num_riskier = (increase > TOLERANCE).sum()
+    largest_increase = increase.max()
+
+    assert num_riskier == 0, f"{num_riskier} applicants got riskier; largest increase {largest_increase:.3f}"
