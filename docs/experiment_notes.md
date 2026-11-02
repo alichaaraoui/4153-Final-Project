@@ -15,10 +15,9 @@ boosting variation must appear here **by its run name**.
 
 | Run | What changed from hgb_default | CV AUC ± std | Train AUC | Valid AUC [95% CI] |
 |---|---|---:|---:|---:|
-| baseline_lr | Logistic regression (Week 1 pipeline) | 0.7227 ± 0.0319 | 0.8455 | 0.7273 [0.6658, 0.7831] |
-| tree_unlimited | Decision tree, no limits | 0.5401 ± 0.0212 | 1.0000 | 0.5389 [0.4980, 0.5815] |
+| baseline_lr | Logistic regression (Week 1 pipeline) | 0.7232 ± 0.0320 | 0.8455 | 0.7273 [0.6658, 0.7831] |
+| tree_unlimited | Decision tree, no limits | 0.5389 ± 0.0235 | 1.0000 | 0.5574 [0.5139, 0.6045] |
 | tree_tuned | Best decision tree from grid: max_depth=5, min_samples_leaf=50 | 0.6965 ± 0.0095 | 0.7824 | 0.7026 [0.6450, 0.7558] |
-| dt_balanced | Decision tree with class_weight=balanced | 0.5483 ± 0.0224 | 1.0000 | 0.5438 [0.5046, 0.5851] |
 | hgb_default | Nothing (default histogram gradient boosting) | 0.7251 ± 0.0390 | 1.0000 | 0.6968 [0.6358, 0.7597] |
 | hgb_balanced | Used class_weight=balanced | 0.7125 ± 0.0446 | 1.0000 | 0.7262 [0.6656, 0.7826] |
 | hgb_undersample | Undersampled the majority class (undersample=3) | 0.7217 ± 0.0245 | 0.9987 | 0.7550 [0.6973, 0.8089] |
@@ -28,7 +27,7 @@ boosting variation must appear here **by its run name**.
 
 ## Overfitting
 
-tree_unlimited has a perfect training AUC of 1.0000 but a CV AUC of only 0.5401,
+tree_unlimited has a perfect training AUC of 1.0000 but a CV AUC of only 0.5389,
 showing severe overfitting and poor generalization. The grid-selected tree_tuned has a
 smaller train-to-CV gap (0.7824 versus 0.6965) and selected max_depth=5 and
 min_samples_leaf=50.
@@ -42,7 +41,7 @@ the default. hgb_undersample had the highest validation AUC (0.7550), but its CV
 was 0.0034 below the default, so the validation result alone is not enough to establish
 a repeatable improvement. hgb_balanced and hgb_lr003 had lower CV AUCs than the
 default, but the differences (0.0126 and 0.0139) are still smaller than the reported
-fold-to-fold standard deviations. The dt_balanced and tree_unlimited models performed
+fold-to-fold standard deviations. The tree_unlimited model performed
 poorly, while the tuned tree generalized better but remained below the boosting and
 logistic-regression CV results. A useful next step would be repeated stratified
 cross-validation with additional seeds to determine whether the small differences persist.
