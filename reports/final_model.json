@@ -1,0 +1,87 @@
+{
+  "run_id": "b52f3b9d3c8443f487df6204c66e6b44",
+  "model": {
+    "model": "hist_gradient_boosting",
+    "params": {
+      "learning_rate": 0.014375063326171738,
+      "max_iter": 200,
+      "max_leaf_nodes": 24,
+      "min_samples_leaf": 135,
+      "l2_regularization": 0.0013628823844677514,
+      "max_features": 0.8824495117535389
+    }
+  },
+  "calibration": "isotonic",
+  "threshold": 0.08,
+  "costs": {
+    "approve_defaulter": 10,
+    "reject_good": 1
+  },
+  "features": [
+    "DAYS_EMPLOYED",
+    "OWN_CAR_AGE",
+    "EXT_SOURCE_1",
+    "EXT_SOURCE_2",
+    "EXT_SOURCE_3"
+  ],
+  "n_features": 5,
+  "cv_auc_mean": 0.7290361118161729,
+  "cv_auc_std": 0.021209404337033097,
+  "valid": {
+    "valid_auc": 0.6998011794892463,
+    "valid_auc_ci_low": 0.6418514346608291,
+    "valid_auc_ci_high": 0.7577075817830451,
+    "valid_pr_auc": 0.16131818418337607,
+    "valid_ks": 0.3171187146522656,
+    "cost_at_threshold": 0.595,
+    "cost_at_0.5": 0.81,
+    "cost_approve_all": 0.81,
+    "cost_reject_all": 0.919,
+    "reject_rate": 0.313
+  },
+  "calibration_valid": {
+    "before": {
+      "brier": 0.07182564067531282,
+      "mean_predicted": 0.08164934832557165,
+      "default_rate": 0.081
+    },
+    "after": {
+      "brier": 0.0723501707131141,
+      "mean_predicted": 0.083649140532053,
+      "default_rate": 0.081
+    }
+  },
+  "latency_p50_ms": 4.054438009916339,
+  "latency_p95_ms": 5.268652104859938,
+  "model_size_kb": 525.435546875,
+  "compare_to": {
+    "run": "tree_tuned",
+    "spec": {
+      "model": "decision_tree",
+      "params": {
+        "max_depth": 5,
+        "min_samples_leaf": 50
+      }
+    },
+    "n_features": 164,
+    "valid_auc": 0.7026222813310227,
+    "valid_auc_ci_low": 0.6449916938193654,
+    "valid_auc_ci_high": 0.7558285869565218,
+    "valid_pr_auc": 0.1589100068049007,
+    "valid_ks": 0.33933825011082897,
+    "latency_p50_ms": 2.6352295026299544,
+    "latency_p95_ms": 3.069907709141262,
+    "model_size_kb": 17.69140625,
+    "auc_diff": -0.002821101841776419,
+    "auc_diff_ci": [
+      -0.06132887850894605,
+      0.060302203086123655
+    ]
+  },
+  "registered": {
+    "name": "credit-risk",
+    "version": "1",
+    "alias": "staging",
+    "uri": "models:/credit-risk@staging"
+  }
+}

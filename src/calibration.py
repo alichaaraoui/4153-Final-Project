@@ -47,7 +47,10 @@ def calibrate(model: Pipeline, method: str, n_folds: int, seed: int) -> Calibrat
     Hints:
         - ``CalibratedClassifierCV(model, method=..., cv=..., ensemble=False)``.
     """
-    raise NotImplementedError("TODO(student): wrap the model in CalibratedClassifierCV")
+    if method not in METHODS:
+        raise ValueError(f"unknown calibration method '{method}'; use one of {METHODS}")
+    folds = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=seed)
+    return CalibratedClassifierCV(model, method=method, cv=folds, ensemble=False)
 
 
 # PROVIDED

@@ -15,7 +15,8 @@ Usage (from the repository root):
     python run.py runs         export every MLflow run to reports/mlflow_runs.csv
     python run.py tune         add Optuna trials to the tuning study (--trials N)
     python run.py threshold    choose the decision threshold from the costs
-    python run.py final        calibrate, check, and register the final model
+    python run.py prune        rank the features and score shorter feature lists
+    python run.py final       calibrate, check, and register the final model
     python run.py test         run the tests
     python run.py lint         check code style
     python run.py check        run the Week 3 checks (--stage mon / --stage wed: one checkpoint)
@@ -58,6 +59,7 @@ COMMANDS = {
     "runs": "export every MLflow run to reports/mlflow_runs.csv",
     "tune": "add Optuna trials to the tuning study (--trials N)",
     "threshold": "choose the decision threshold from the costs",
+    "prune": "rank the features and score shorter feature lists",
     "final": "calibrate, check, and register the final model",
     "test": "run the tests",
     "lint": "check code style",
@@ -78,6 +80,7 @@ MODULES = {
     "runs": ["-m", "src.tracking"],
     "tune": ["-m", "src.tune"],
     "threshold": ["-m", "src.cost"],
+    "prune": ["-m", "src.prune"],
     "final": ["-m", "src.final"],
     "test": ["-m", "pytest"],
     "lint": ["-m", "ruff", "check", "."],

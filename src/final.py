@@ -81,12 +81,11 @@ def register_model(
     Returns:
         ``{"name": ..., "version": <str>, "alias": ..., "uri": "models:/<name>@<alias>"}``.
     """
-    info = log_sklearn_model(model, registered_model_name=config["week3"]["final"]["registry"]["name"],
-                        input_example=X_example)
+    registry = config["week3"]["final"]["registry"]
+    name, alias = registry["name"], registry["alias"]
+    info = log_sklearn_model(model, registered_model_name=name, input_example=X_example)
 
     client = MlflowClient()
-    name = config["week3"]["final"]["registry"]["name"]
-    alias = config["week3"]["final"]["registry"]["alias"]
     version = str(info.registered_model_version)
     client.set_registered_model_alias(name, alias, version)
     client.set_model_version_tag(name, version, "threshold", str(threshold))
@@ -123,7 +122,7 @@ def run_final(config: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("the final model must train on the real default rate: calibrated "
                          "probabilities from undersampled rows are too high. Remove "
                          "undersample from the final spec.")
-    data = load_training_data(config)
+    data = load_training_data(config, final.get("features"))
     base = make_model(spec, data.numeric, data.categorical, config)
     calibrated = calibrate(base, final["calibration"], folds, seed)
     out = week3["outputs"]

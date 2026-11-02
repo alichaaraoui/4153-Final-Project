@@ -24,6 +24,13 @@ optuna:
 
 calibration: isotonic     # isotonic, or sigmoid (Platt scaling)
 
+# python run.py prune scores the model on its top N features, for each N below.
+prune_counts: [5, 10, 15, 20, 30, 50, 80, 120]
+
+# The features the final model uses (delete this list to use them all). From prune: the fewest
+# features whose CV AUC is within one std of the best count.
+features: [EXT_SOURCE_2, EXT_SOURCE_3, EXT_SOURCE_1, DAYS_EMPLOYED, OWN_CAR_AGE]
+
 registry:
   name: credit-risk
   alias: staging
