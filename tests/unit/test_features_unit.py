@@ -58,7 +58,10 @@ def test_previous_features_ignore_row_order() -> None:
         - Compare both results sorted by SK_ID_CURR with ``pd.testing.assert_frame_equal``
           (``check_like=True`` ignores column order).
     """
-    pytest.fail("TODO(student): write this test")
+    shuffled = small_previous().sample(frac=1, random_state=0)
+    before = aggregate_previous(small_previous()).sort_values("SK_ID_CURR")
+    after = aggregate_previous(shuffled).sort_values("SK_ID_CURR")
+    pd.testing.assert_frame_equal(before, after, check_like=True)
 
 
 # TODO(student)
@@ -74,7 +77,17 @@ def test_join_keeps_applicants_without_history() -> None:
           ``small_bureau()["SK_ID_CURR"]``.
         - ``join_features(app, {"bureau": aggregates})``.
     """
-    pytest.fail("TODO(student): write this test")
+    app = small_application()
+    bureau_agg = aggregate_bureau(small_bureau())
+    joined = join_features(app, {"bureau": bureau_agg})
+
+    assert len(joined) == len(app)
+    no_history_id = set(app["SK_ID_CURR"]) - set(bureau_agg["SK_ID_CURR"])
+    assert len(no_history_id) > 0
+    no_history_id = no_history_id.pop()
+    row = joined[joined["SK_ID_CURR"] == no_history_id].iloc[0]
+    assert row["BUREAU_COUNT"] == 0
+    assert pd.isna(row["BUREAU_AMT_CREDIT_SUM_MEAN"])
 
 
 # TODO(student)
@@ -88,7 +101,8 @@ def test_join_refuses_a_table_that_was_not_aggregated() -> None:
         - ``with pytest.raises(ValueError):`` around ``join_features(app, {"bureau":
           small_bureau()})``.
     """
-    pytest.fail("TODO(student): write this test")
+    with pytest.raises(ValueError):
+        join_features(small_application(), {"bureau": small_bureau()})
 
 
 # TODO(student)
@@ -102,4 +116,10 @@ def test_ratios_are_never_infinite() -> None:
     Hints:
         - ``np.isinf(out[cols].to_numpy(dtype=float)).any()`` is True if any value is inf.
     """
-    pytest.fail("TODO(student): write this test")
+    app = small_application_full().copy()
+    app.loc[0, "AMT_INCOME_TOTAL"] = 0
+    app.loc[1, "AMT_CREDIT"] = 0
+    out = add_ratio_features(app)
+    ratio_cols = [c for c in out.columns if c.endswith("_RATIO")]
+    assert not np.isinf(out[ratio_cols].to_numpy(dtype=float)).any()
+    assert pd.isna(out.loc[0, "CREDIT_INCOME_RATIO"])
