@@ -39,7 +39,25 @@ def test_schema(features: pd.DataFrame) -> None:
         - ``set(features["TARGET"].unique()) <= {0, 1}``.
         - ``pd.api.types.is_numeric_dtype(features[col])``.
     """
-    pytest.fail("TODO(student): write this test")
+
+    #“SK_ID_CURR must be one of the columns, and if it isn’t, fail with this message.” Same for Target
+    assert "SK_ID_CURR" in features.columns, "SK_ID_CURR column is missing"
+    assert "TARGET" in features.columns, "Target column is missing"
+    #Check is target only holds 0's, and 1's
+    assert set(features["TARGET"].unique())<={0,1}, "Target has values other then 0 or 1"
+    # are the 8 columns numeric
+    numeric_columns = [
+        "AMT_INCOME_TOTAL",
+        "AMT_CREDIT",
+        "DAYS_BIRTH",
+        "EXT_SOURCE_2",
+        "CREDIT_INCOME_RATIO",
+        "ANNUITY_INCOME_RATIO",
+        "CREDIT_GOODS_RATIO",
+        "ANNUITY_CREDIT_RATIO",
+    ]
+    for col in numeric_columns:
+        assert pd.api.types.is_numeric_dtype(features[col]), f"{col} is not numeric" 
 
 
 # TODO(student)
@@ -55,7 +73,13 @@ def test_value_ranges(features: pd.DataFrame) -> None:
         - ``[c for c in features.columns if c.endswith(("_RATE", "_SHARE"))]``.
         - ``s.dropna().between(0, 1).all()`` ignores missing values.
     """
-    pytest.fail("TODO(student): write this test")
+    assert features["DAYS_BIRTH"].between(-25550, -6570).all(), "DAYS_BIRTH outside ages 18 to 70"
+    assert (features["AMT_INCOME_TOTAL"]>0).all(), "AMT_INCOME_TOTAL has values of 0 or below"
+   #finds every column ending in _RATE or _SHARE
+    rate_columns = [ c for c in features.columns if c.endswith(("_RATE", "SHARE"))]
+
+    for col in rate_columns:
+        assert features[col].dropna().between(0,1).all(), f"{col} has values outside 0, 1"
 
 
 # TODO(student)
@@ -70,7 +94,15 @@ def test_missing_values(features: pd.DataFrame) -> None:
         - ``features[col].isna().mean()`` is the share missing.
         - Look at ``features.isna().mean().sort_values()`` before you pick limits.
     """
-    pytest.fail("TODO(student): write this test")
+    for col in ["AMT_INCOME_TOTAL", "AMT_CREDIT", "DAYS_BIRTH", "TARGET"]:
+        assert features[col].notna().all(), f"{col} has missing values"
+
+    share_missing = features["EXT_SOURCE_2"].isna().mean()
+    assert share_missing < 0.01, f"EXT_SOURCE_2 is {share_missing:.1%} missing, expected under 1%"
+
+    empty_columns = features.columns[features.isna().all()].tolist()
+    assert not empty_columns, f"columns missing for every applicant: {empty_columns}"
+
 
 
 # TODO(student)
@@ -80,4 +112,7 @@ def test_default_rate(features: pd.DataFrame) -> None:
     A rate far from 8% means the sample or the labels changed: every model, threshold, and
     cost would then be wrong. Pick a band (for example 6% to 10%) and explain the choice.
     """
-    pytest.fail("TODO(student): write this test")
+    rate = features["TARGET"].mean()
+    assert 0.06 <= rate <= 0.10, f"default rate is {rate:.1%}, expected 6% to 10%"
+
+
