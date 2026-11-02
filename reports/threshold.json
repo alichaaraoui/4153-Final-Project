@@ -1,5 +1,5 @@
 {
-  "threshold": 0.105,
+  "threshold": 0.09,
   "chosen_on": "train out-of-fold scores",
   "costs": {
     "approve_defaulter": 10,
@@ -8,27 +8,27 @@
   "model": {
     "model": "hist_gradient_boosting",
     "params": {
-      "learning_rate": 0.010169525877146807,
-      "max_iter": 300,
-      "max_leaf_nodes": 23,
-      "min_samples_leaf": 127,
-      "l2_regularization": 0.0010813747663476119,
-      "max_features": 0.9746076688061942
+      "learning_rate": 0.010236994778513888,
+      "max_iter": 450,
+      "max_leaf_nodes": 7,
+      "min_samples_leaf": 156,
+      "l2_regularization": 0.001074986740076156,
+      "max_features": 0.3668268615442302
     }
   },
   "calibrated": false,
   "train_oof": {
     "cost_at_threshold": 0.5195,
-    "cost_at_0.5": 0.8,
+    "cost_at_0.5": 0.80025,
     "cost_approve_all": 0.8075,
     "cost_reject_all": 0.91925,
-    "reject_rate": 0.21525
+    "reject_rate": 0.262
   },
   "valid": {
-    "cost_at_threshold": 0.541,
-    "cost_at_0.5": 0.811,
+    "cost_at_threshold": 0.528,
+    "cost_at_0.5": 0.801,
     "cost_approve_all": 0.81,
     "cost_reject_all": 0.919,
-    "reject_rate": 0.215
+    "reject_rate": 0.268
   }
 }
