@@ -48,7 +48,7 @@ runs:
     model: hist_gradient_boosting
     params: {learning_rate: 0.003}
 
-  dt_balanced:
-    model: decision_tree
-    params: {class_weight: balanced}
+  hgb_balanced_l2:
+    model: hist_gradient_boosting
+    params: {class_weight: balanced, l2_regularization: 1.0}
   
