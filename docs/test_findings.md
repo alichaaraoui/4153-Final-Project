@@ -6,7 +6,7 @@ Run `python run.py testreport` and copy the counts from `reports/test_report.md`
 
 | Kind | Tests | Passed | Failed | Known failures (xfail) | Skipped |
 |---|---|---|---|---|---|
-| Unit | TODO | TODO | TODO | TODO | TODO |
+| Unit | 5 | 5 | 0 | TODO | TODO |
 | Data | TODO | TODO | TODO | TODO | TODO |
 | Model | TODO | TODO | TODO | TODO | TODO |
 
@@ -29,3 +29,5 @@ say which test you expected to be the most likely to fail, and why.
 - **Does it matter for the lender?** TODO
 - **Decision:** TODO (fixed the model, how; or kept as a known failure with
   `@pytest.mark.xfail(strict=True, ...)`, and what would make you fix it)
+
+  For the Unit tests, no tests failed. I predicted the test: joining a raw child table would raise an error would fail.
