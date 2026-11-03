@@ -1,6 +1,6 @@
 {
-  "created": "2026-11-02T20:33:49+00:00",
-  "git_commit": "c1d2231",
+  "created": "2026-11-03T19:39:14+00:00",
+  "git_commit": "af9218c",
   "categories": {
     "unit": {
       "counts": {
@@ -68,8 +68,7 @@
     },
     "model": {
       "counts": {
-        "passed": 3,
-        "failed": 1
+        "passed": 4
       },
       "tests": [
         {
@@ -89,8 +88,8 @@
         },
         {
           "name": "test_higher_income_does_not_raise_risk",
-          "outcome": "failed",
-          "message": "KeyError: 'AMT_INCOME_TOTAL'"
+          "outcome": "passed",
+          "message": ""
         }
       ]
     }

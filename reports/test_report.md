@@ -1,6 +1,6 @@
 # Test report (Week 4)
 
-Commit `c1d2231`, 2026-11-02T20:33:49+00:00.
+Commit `af9218c`, 2026-11-03T19:39:14+00:00.
 
 ## Unit tests (5 passed)
 
@@ -22,11 +22,11 @@ Commit `c1d2231`, 2026-11-02T20:33:49+00:00.
 | test_missing_values | passed |  |
 | test_default_rate | passed |  |
 
-## Model tests (1 failed, 3 passed)
+## Model tests (4 passed)
 
 | Test | Outcome | Message |
 |---|---|---|
 | test_minimum_auc | passed |  |
 | test_application_weekday_does_not_change_the_score | passed |  |
 | test_gender_does_not_change_the_score | passed |  |
-| test_higher_income_does_not_raise_risk | failed | KeyError: 'AMT_INCOME_TOTAL' |
+| test_higher_income_does_not_raise_risk | passed |  |
