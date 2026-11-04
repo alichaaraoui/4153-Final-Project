@@ -1,0 +1,35 @@
+{
+  "created": "2026-11-04T19:46:57+00:00",
+  "git_commit": "0162055-dirty",
+  "code_fingerprint": "3f61207039930efa",
+  "data_version": "b2c3ac925963",
+  "model": {
+    "model": "hist_gradient_boosting",
+    "params": {
+      "learning_rate": 0.010236994778513888,
+      "max_iter": 450,
+      "max_leaf_nodes": 7,
+      "min_samples_leaf": 156,
+      "l2_regularization": 0.001074986740076156,
+      "max_features": 0.3668268615442302
+    }
+  },
+  "n_features": 164,
+  "valid_auc": 0.7511519499187255,
+  "valid_auc_ci_low": 0.6996340683247073,
+  "valid_auc_ci_high": 0.8022386317202731,
+  "valid_pr_auc": 0.2169350576777638,
+  "valid_ks": 0.3808621824581201,
+  "threshold": 0.075,
+  "cost_at_threshold": 0.537,
+  "cost_at_0.5": 0.792,
+  "cost_approve_all": 0.81,
+  "cost_reject_all": 0.919,
+  "reject_rate": 0.299,
+  "model_tests": {
+    "passed": 4,
+    "failed": 0,
+    "xfail": 0,
+    "skipped": 0
+  }
+}

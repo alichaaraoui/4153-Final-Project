@@ -21,8 +21,9 @@ import numpy as np  # noqa: F401  (for you to use)
 import pytest  # noqa: F401  (for you to use)
 from sklearn.metrics import roc_auc_score
 
+from src.experiment import load_training_data, load_week3_config
 from src.model_io import ProductionModel, change_income, score  # noqa: F401
-from src.experiment import load_week3_config, load_training_data
+
 # The floor every reasonable model on this data clears: the Week 1 logistic regression on
 # the application table alone scored 0.710, and a model that cannot beat that is broken.
 MIN_AUC = 0.70
@@ -101,11 +102,11 @@ def test_higher_income_does_not_raise_risk(production: ProductionModel) -> None:
     config = load_week3_config()
     data = load_training_data(config)
     X = data.X_valid
-    # X = production.data.X_valid
 
     increase = score(production.model, change_income(X, 1.5)) - score(production.model, X)
 
     num_riskier = (increase > TOLERANCE).sum()
     largest_increase = increase.max()
 
-    assert num_riskier == 0, f"{num_riskier} applicants got riskier; largest increase {largest_increase:.3f}"
+    assert num_riskier == 0, f"{num_riskier} applicants;\
+          largest increase {largest_increase:.3f}"
