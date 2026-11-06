@@ -26,6 +26,7 @@ runs:
     model: decision_tree              # no limits at all: compare its train AUC with its CV AUC
   hgb_default:
     model: hist_gradient_boosting     # every setting at its default
+    params: {max_iter: 1}
 
   # Variations of hgb_default. Change ONE thing per run, so you know what made the difference.
   hgb_balanced:
