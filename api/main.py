@@ -64,7 +64,16 @@ def model_info() -> ModelInfo:
     features), valid_auc, data_version, exported. Open models/model_info.json to see the
     keys.
     """
-    raise NotImplementedError("TODO(student): describe the serving model")
+    b = bundle()
+    return ModelInfo(
+        name=b.info["name"],
+        version=b.info["version"],
+        threshold=b.info["threshold"],
+        n_features=b.info["n_features"],
+        valid_auc=b.info["valid_auc"],
+        data_version=b.info["data_version"],
+        exported=b.info["exported"]
+    )
 
 
 # TODO(student)
@@ -86,4 +95,21 @@ def predict(request: PredictRequest) -> PredictResponse:
     You do not need to check the input yourself: FastAPI already refused anything that does
     not fit ``PredictRequest`` with a 422.
     """
-    raise NotImplementedError("TODO(student): score the applicant and decide")
+    b = bundle()
+    model = None
+    try:
+        model = build_features(request, b.store, b.features)
+    except UnknownApplicant as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    probability = b.model.predict_proba(model)[0, 1]
+    threshold = b.info["threshold"]
+    decision = "reject" if probability >= threshold else "approve"
+
+    return PredictResponse(
+        SK_ID_CURR=request.SK_ID_CURR,
+        probability=probability,
+        decision=decision,
+        threshold=threshold,
+        model_version=b.info["version"],
+    )
