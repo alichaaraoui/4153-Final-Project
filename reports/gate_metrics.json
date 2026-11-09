@@ -1,7 +1,7 @@
 {
-  "created": "2026-11-04T19:46:57+00:00",
-  "git_commit": "0162055-dirty",
-  "code_fingerprint": "3f61207039930efa",
+  "created": "2026-11-09T19:36:05+00:00",
+  "git_commit": "5a851e6-dirty",
+  "code_fingerprint": "9fcfd91583c75daa",
   "data_version": "b2c3ac925963",
   "model": {
     "model": "hist_gradient_boosting",
