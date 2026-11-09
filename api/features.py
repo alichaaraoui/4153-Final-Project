@@ -69,4 +69,24 @@ def build_features(request: PredictRequest, store: pd.DataFrame,
         - Why recompute the ratios? Remember Week 4's ``change_income``: a new income with
           the old CREDIT_INCOME_RATIO describes an applicant who cannot exist.
     """
-    raise NotImplementedError("TODO(student): look up the applicant and apply the overrides")
+    # 1. Look up the applicant; unknown id raises UnknownApplicant naming the id
+    if request.SK_ID_CURR not in store.index:
+        raise UnknownApplicant(f"Applicant {request.SK_ID_CURR} is not in the feature store")
+
+    # 2. Take a COPY of the row as a one-row DataFrame; never change the store
+    row = store.loc[[request.SK_ID_CURR]].copy()
+
+    # 3. Replace every OVERRIDABLE field the request sets (not None)
+    changed = False
+    for name in OVERRIDABLE:
+        value = getattr(request, name, None)
+        if value is not None:
+            row[name] = float(value)
+            changed = True
+
+    # 3b. If any was replaced, recompute the ratio features
+    if changed:
+        row = recompute_ratios(row)
+
+    # 4. Return the row with its columns in the order of features
+    return row[features]
