@@ -8,8 +8,7 @@ Team: 1
 ## The pipeline
 
 Cloud Build project: credit-risk-ttriplea. Trigger: pr-checks, on pull requests to
-`main`. Branch protection on `main` requires the check: TODO (the check's name as GitHub
-shows it).
+`main`. Branch protection on `main` requires the check: `pr-checks`.
 
 | Step | What it runs | Why it is there |
 |---|---|---|
