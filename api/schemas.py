@@ -41,7 +41,7 @@ class PredictRequest(BaseModel):
     AMT_CREDIT: float | None = Field(default=None, gt=0, description="The loan amount")
     AMT_ANNUITY: float | None = Field(default=None, gt=0, description="The yearly repayment")
 
-    
+
 
 # PROVIDED
 class PredictResponse(BaseModel):
