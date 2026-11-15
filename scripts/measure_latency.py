@@ -40,7 +40,16 @@ def summarize(times_ms: list[float]) -> dict[str, float]:
         - ``np.percentile(times_ms, [50, 95])``.
         - An empty list is a mistake by the caller: raise a ValueError.
     """
-    raise NotImplementedError("TODO(student): p50, p95, max, mean")
+    if not times_ms:
+        raise ValueError("times_ms is empty")
+    p50, p95 = np.percentile(times_ms, [50, 95])
+    return {
+        "n": len(times_ms),
+        "p50_ms": float(p50),
+        "p95_ms": float(p95),
+        "max_ms": float(max(times_ms)),
+        "mean_ms": float(np.mean(times_ms)),
+    }
 
 
 # PROVIDED
