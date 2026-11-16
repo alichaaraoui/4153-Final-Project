@@ -4,7 +4,7 @@
 #
 # PROVIDED: a slim base image. Use the SAME Python minor version as the laptop that exported
 # the model (the second line of requirements-api.txt says which), so the saved model loads.
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
