@@ -1,0 +1,162 @@
+{
+  "source": "cloud_logging",
+  "logs_file": "data/logs/predictions.json",
+  "records": 1950,
+  "model_versions": [
+    "1"
+  ],
+  "reference": {
+    "rows": 4000,
+    "what": "X_train, the model's training rows",
+    "valid_approval_rate": 0.607,
+    "valid_mean_score": 0.0812
+  },
+  "thresholds": {
+    "psi_moderate": 0.1,
+    "psi_major": 0.25
+  },
+  "batches": {
+    "1": {
+      "requests": 961,
+      "first": "2026-11-16T20:15:58.015486+00:00",
+      "last": "2026-11-16T20:16:50.980303+00:00",
+      "approval_rate": 0.6046,
+      "mean_score": 0.0864,
+      "score_psi": 0.0093,
+      "features_major": 0,
+      "features_moderate": 0,
+      "top": [
+        {
+          "feature": "DAYS_EMPLOYED",
+          "psi": 0.0216,
+          "ks_stat": 0.0529,
+          "missing_ref": 0.1795,
+          "missing_cur": 0.1665,
+          "mean_ref": -2292.5198,
+          "mean_cur": -2428.8976,
+          "level": "none"
+        },
+        {
+          "feature": "EXT_SOURCE_1",
+          "psi": 0.0191,
+          "ks_stat": 0.0383,
+          "missing_ref": 0.57,
+          "missing_cur": 0.5401,
+          "mean_ref": 0.5003,
+          "mean_cur": 0.5056,
+          "level": "none"
+        },
+        {
+          "feature": "EXT_SOURCE_3",
+          "psi": 0.011,
+          "ks_stat": 0.025,
+          "missing_ref": 0.1995,
+          "missing_cur": 0.1883,
+          "mean_ref": 0.5113,
+          "mean_cur": 0.5082,
+          "level": "none"
+        },
+        {
+          "feature": "OWN_CAR_AGE",
+          "psi": 0.0055,
+          "ks_stat": 0.0414,
+          "missing_ref": 0.658,
+          "missing_cur": 0.6587,
+          "mean_ref": 12.3099,
+          "mean_cur": 12.5152,
+          "level": "none"
+        },
+        {
+          "feature": "EXT_SOURCE_2",
+          "psi": 0.0052,
+          "ks_stat": 0.0199,
+          "missing_ref": 0.0022,
+          "missing_cur": 0.0031,
+          "mean_ref": 0.5091,
+          "mean_cur": 0.5097,
+          "level": "none"
+        }
+      ],
+      "evidently": {
+        "html": "/Users/alichaaraoui/Documents/ITAI_5153/credit-risk-week1/reports/monitoring/evidently/batch1.html",
+        "drifted_columns": 0,
+        "drifted_share": 0.0,
+        "columns": 5
+      }
+    },
+    "2": {
+      "requests": 988,
+      "first": "2026-11-16T20:16:55.922613+00:00",
+      "last": "2026-11-16T20:17:22.322210+00:00",
+      "approval_rate": 0.583,
+      "mean_score": 0.0875,
+      "score_psi": 0.0081,
+      "features_major": 1,
+      "features_moderate": 0,
+      "top": [
+        {
+          "feature": "EXT_SOURCE_3",
+          "psi": 0.5395,
+          "ks_stat": 0.0367,
+          "missing_ref": 0.1995,
+          "missing_cur": 0.5364,
+          "mean_ref": 0.5113,
+          "mean_cur": 0.5094,
+          "level": "major"
+        },
+        {
+          "feature": "EXT_SOURCE_2",
+          "psi": 0.0185,
+          "ks_stat": 0.0434,
+          "missing_ref": 0.0022,
+          "missing_cur": 0.0,
+          "mean_ref": 0.5091,
+          "mean_cur": 0.5008,
+          "level": "none"
+        },
+        {
+          "feature": "OWN_CAR_AGE",
+          "psi": 0.0173,
+          "ks_stat": 0.0714,
+          "missing_ref": 0.658,
+          "missing_cur": 0.6427,
+          "mean_ref": 12.3099,
+          "mean_cur": 10.8669,
+          "level": "none"
+        },
+        {
+          "feature": "DAYS_EMPLOYED",
+          "psi": 0.0126,
+          "ks_stat": 0.0307,
+          "missing_ref": 0.1795,
+          "missing_cur": 0.1893,
+          "mean_ref": -2292.5198,
+          "mean_cur": -2216.4382,
+          "level": "none"
+        },
+        {
+          "feature": "EXT_SOURCE_1",
+          "psi": 0.0065,
+          "ks_stat": 0.0522,
+          "missing_ref": 0.57,
+          "missing_cur": 0.5729,
+          "mean_ref": 0.5003,
+          "mean_cur": 0.488,
+          "level": "none"
+        }
+      ],
+      "evidently": {
+        "html": "/Users/alichaaraoui/Documents/ITAI_5153/credit-risk-week1/reports/monitoring/evidently/batch2.html",
+        "drifted_columns": 1,
+        "drifted_share": 0.2,
+        "columns": 5
+      }
+    }
+  },
+  "not_compared": {
+    "not_in_a_batch": 0,
+    "batches_with_too_few": {
+      "3": 1
+    }
+  }
+}
