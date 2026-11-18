@@ -112,7 +112,6 @@ def describe(feature: str, value: Any, typical: Any) -> str:
            f"(typical: {plain_value(feature, typical)})"
 
 
-# TODO(student)
 def explain_applicant(contributions: pd.Series, values: pd.Series, typical: pd.Series,
                       n: int = N_REASONS) -> list[str]:
     """The reasons, in plain language, that pushed one applicant's risk UP the most.
@@ -134,7 +133,14 @@ def explain_applicant(contributions: pd.Series, values: pd.Series, typical: pd.S
     Hints:
         - ``contributions[contributions > 0].sort_values(ascending=False).head(n)``
     """
-    raise NotImplementedError("TODO(student): the applicant's top reasons")
+    if n <= 0:
+        return []
+    top = contributions[contributions > 0].sort_values(ascending=False).head(n)
+    return [
+        describe(feature, values[feature], typical[feature])
+        + f" (raises the risk score by {contribution:.2f})"
+        for feature, contribution in top.items()
+    ]
 
 
 # PROVIDED

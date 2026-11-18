@@ -1,0 +1,56 @@
+{
+  "model_version": "1",
+  "threshold": 0.075,
+  "data": "validation set",
+  "n": 1000,
+  "base_value_log_odds": -2.8157,
+  "global_top": [
+    "EXT_SOURCE_2",
+    "EXT_SOURCE_3",
+    "DAYS_EMPLOYED",
+    "EXT_SOURCE_1",
+    "OWN_CAR_AGE"
+  ],
+  "applicants": [
+    {
+      "SK_ID_CURR": 386641,
+      "kind": "riskiest",
+      "probability": 0.3667,
+      "decision": "reject",
+      "reasons": [
+        "external credit score 2 is 0.0229 (typical: 0.564) (raises the risk score by 1.10)",
+        "external credit score 3 is 0.229 (typical: 0.532) (raises the risk score by 0.51)",
+        "time in the current job is 0.5 years (typical: 4.4 years) (raises the risk score by 0.33)"
+      ],
+      "lowered_risk": []
+    },
+    {
+      "SK_ID_CURR": 122934,
+      "kind": "typical decline",
+      "probability": 0.1326,
+      "decision": "reject",
+      "reasons": [
+        "external credit score 2 is 0.344 (typical: 0.564) (raises the risk score by 0.72)",
+        "external credit score 3 is missing (typical: 0.532) (raises the risk score by 0.31)",
+        "time in the current job is 2.3 years (typical: 4.4 years) (raises the risk score by 0.25)"
+      ],
+      "lowered_risk": [
+        "external credit score 1 is 0.533 (typical: 0.5)"
+      ]
+    },
+    {
+      "SK_ID_CURR": 270289,
+      "kind": "borderline",
+      "probability": 0.0753,
+      "decision": "reject",
+      "reasons": [
+        "external credit score 2 is 0.31 (typical: 0.564) (raises the risk score by 0.33)",
+        "external credit score 3 is 0.366 (typical: 0.532) (raises the risk score by 0.30)",
+        "external credit score 1 is missing (typical: 0.5) (raises the risk score by 0.18)"
+      ],
+      "lowered_risk": [
+        "time in the current job is missing (typical: 4.4 years)"
+      ]
+    }
+  ]
+}
