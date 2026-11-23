@@ -26,9 +26,9 @@ import joblib
 import numpy as np
 import pandas as pd
 from numpy.typing import ArrayLike
-from sklearn.metrics import roc_auc_score  # noqa: F401  (for you to use)
+from sklearn.metrics import roc_auc_score
 
-from src.cost import expected_cost  # noqa: F401  (your Week 3 function, for you to use)
+from src.cost import expected_cost
 from src.experiment import load_training_data
 from src.monitoring import LOGS, batch_of, load_logs
 from src.retrain import load_retrain_config
@@ -41,7 +41,6 @@ PERFORMANCE_KEYS = ("n", "n_default", "default_rate", "mean_score", "auc", "cost
                     "approval_rate", "bad_rate_approved")
 
 
-# TODO(student)
 def performance(y_true: ArrayLike, scores: ArrayLike, threshold: float,
                 costs: dict[str, float]) -> dict[str, float]:
     """How a model really did on a set of applicants whose outcomes are known.
@@ -69,7 +68,28 @@ def performance(y_true: ArrayLike, scores: ArrayLike, threshold: float,
         - Convert with ``np.asarray`` first; ``approved = scores < threshold``.
         - ``y[approved].mean()`` is the bad rate among the approved.
     """
-    raise NotImplementedError("TODO(student): the real performance on known outcomes")
+    y_true = np.asarray(y_true)
+    scores = np.asarray(scores)
+    approved = scores < threshold
+    n = len(y_true)
+    n_default = int(y_true.sum())
+    default_rate = n_default / n if n > 0 else float("NaN")
+    mean_score = float(scores.mean()) if n > 0 else float("NaN")
+    auc = float(roc_auc_score(y_true, scores)) if n > 0 else float("NaN")
+    cost = float(expected_cost(y_true, scores, threshold, costs)) if n > 0 else float("NaN")
+    approval_rate = float(approved.mean()) if n > 0 else float("NaN")
+    bad_rate_approved = float(y_true[approved].mean()) if approved.any() else float("NaN")
+
+    return {
+        "n": n,
+        "n_default": n_default,
+        "default_rate": default_rate,
+        "mean_score": mean_score,
+        "auc": auc,
+        "cost": cost,
+        "approval_rate": approval_rate,
+        "bad_rate_approved": bad_rate_approved,
+    }
 
 
 # PROVIDED
