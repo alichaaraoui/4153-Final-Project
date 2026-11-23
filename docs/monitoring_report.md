@@ -63,14 +63,33 @@ The model's output barely moved: approval rate 58.3% (60.7% on validation), mean
 
 ## 5. Proposed alerts
 
-TODO: At least four alerts. For each: the signal, the threshold, how often it is checked,
-and what it triggers (who is told, and what they do first).
+We propose four alerts covering data quality, feature drift, model output changes, and service reliability. These alerts should be checked automatically so that a problem is detected during a batch, rather than only when someone downloads the logs and analyses them.
 
 | Signal | Threshold | Checked | Triggers |
 |---|---|---|---|
-| TODO | | | |
+| Missing feature values | 	Alert if any important feature's missing rate increases by more than 10 percentage points from its training baseline, or exceeds 40% missing. | Every 15 minutes, using a rolling window of predictions. | Notify the ML engineer and data pipeline owner through email or the team alert channel. The data pipeline owner first checks the upstream data source, API responses, and joins to identify whether values are missing because of an outage or a pipeline failure. |
+| Feature drift (PSI) | Warning at PSI above 0.1; critical alert above 0.25 for any monitored feature. | Every hour, provided at least 100 new predictions are available. | Notify the ML engineer. They first compare the affected feature's distribution with X_train and investigate changes in the upstream data source. If major drift is confirmed, they assess whether predictions should be paused or the model retrained. |
+| Prediction score or approval-rate change | Alert if the approval rate changes by more than 5 percentage points from the validation baseline (60.7%), or mean prediction score changes by more than 0.03 from its validation baseline (0.081). | Every 15 minutes, using a rolling window of at least 100 predictions. | Notify the ML engineer and product/business owner. They first check whether the change is caused by a threshold or model-version change, then investigate feature distributions and recent prediction logs before deciding whether to restrict model use. |
+| Prediction service failures | Alert if more than 2% of /predict requests return errors over a 5-minute window, or if the service stops producing prediction logs for 5 minutes while requests are expected. | Continuously, with a 5-minute rolling check. | Notify the API/service owner and ML engineer. The service owner first checks Cloud Run logs, recent deployments, application errors, and service health, then works to restore normal prediction service.
 
 ## 6. Limitations
 
-TODO: What this monitoring cannot see (for example: whether the decisions were right), how
-long until it could, and what you would add with more time.
+Our monitoring can identify changes in the input data and model outputs, but it cannot yet establish whether individual credit decisions are correct.
+
+The main limitations are:
+
+* No immediate outcome labels: We do not know whether approved applicants actually repay their loans or whether rejected applicants would have defaulted. Loan repayment and default outcomes only become available after applicants have had enough time to make repayments. This can take months or longer, depending on the loan and repayment schedule. Without these labels, we cannot directly measure real-world model accuracy, precision, recall, or default prediction performance.
+* Drift does not necessarily mean worse predictions: PSI identifies changes in feature distributions, not whether those changes make the model less accurate. A feature can drift without harming predictions, while a model can become less accurate even when its input distributions appear stable.
+* No visibility into upstream causes: We log the features received by /predict, but we do not currently monitor the external data providers or every step of the data pipeline. For example, we detected the increase in missing EXT_SOURCE_3 values but could not determine from prediction logs alone whether the cause was an external provider outage, a failed API request, or an incorrect database join.
+* No direct fairness monitoring: We do not yet have alerts that check whether approval rates or prediction errors differ unfairly between applicant groups. This would require carefully governed demographic information and additional analysis.
+* Limited sample size and batch coverage: Our analysis used 961 and 988 predictions in two batches. These are useful for identifying large changes, but smaller or gradual changes may be missed. Short monitoring windows can also produce noisy results.
+* Monitoring depends on logging: If predictions are not logged correctly, our drift analysis may be incomplete. Although logging is designed never to break a prediction, we still need independent monitoring to detect missing logs or logging failures.
+
+With more time, we would improve monitoring in four ways:
+
+* Add delayed outcome monitoring: Join prediction records to loan repayment and default outcomes when they become available. This would allow us to measure actual model performance and compare it with validation results.
+* Monitor upstream data sources: Add checks for external data availability, API failures, unexpected missing values, and pipeline join failures, particularly for EXT_SOURCE_3.
+* Add fairness checks: Monitor differences in approval rates and, once outcome labels are available, model error rates across appropriately governed applicant groups.
+* Improve drift detection: Monitor gradual changes over longer periods, use minimum sample-size requirements, and combine PSI with missing-value rates and other statistical tests to reduce false alarms.
+
+Overall, our current monitoring tells us whether the data entering the model and the predictions coming out of it are changing. It does not yet tell us whether the model is making good lending decisions. Adding delayed loan outcome data is the most important next step because it would allow us to monitor actual performance rather than relying only on changes in distributions and prediction statistics.
