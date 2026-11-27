@@ -1,0 +1,63 @@
+{
+  "model": {
+    "model": "hist_gradient_boosting",
+    "params": {
+      "learning_rate": 0.010236994778513888,
+      "max_iter": 450,
+      "max_leaf_nodes": 7,
+      "min_samples_leaf": 156,
+      "l2_regularization": 0.001074986740076156,
+      "max_features": 0.3668268615442302
+    }
+  },
+  "calibration": "isotonic",
+  "threshold": 0.09,
+  "costs": {
+    "approve_defaulter": 10,
+    "reject_good": 1
+  },
+  "features": [
+    "DAYS_EMPLOYED",
+    "OWN_CAR_AGE",
+    "EXT_SOURCE_1",
+    "EXT_SOURCE_2",
+    "EXT_SOURCE_3"
+  ],
+  "n_features": 5,
+  "trained_on": {
+    "train_split": 4000,
+    "production": 1436,
+    "labeled_batches": [
+      1,
+      2
+    ],
+    "total": 5436,
+    "defaults": 511
+  },
+  "recent_slice": {
+    "applicants": 564,
+    "defaults": 72
+  },
+  "cv_auc_mean": 0.7242908717377838,
+  "cv_auc_std": 0.04086345169433203,
+  "valid": {
+    "valid_auc": 0.7219871304020742,
+    "valid_auc_ci_low": 0.6600979255653023,
+    "valid_auc_ci_high": 0.7803458581412311,
+    "valid_pr_auc": 0.19484421941261515,
+    "valid_ks": 0.3460417254396217,
+    "cost_at_threshold": 0.566,
+    "cost_at_0.5": 0.81,
+    "cost_approve_all": 0.81,
+    "cost_reject_all": 0.919,
+    "reject_rate": 0.361
+  },
+  "champion_version": "1",
+  "run_id": "bdedef8c114e410c89515165273532f7",
+  "registered": {
+    "name": "credit-risk",
+    "version": "2",
+    "alias": "challenger",
+    "uri": "models:/credit-risk@challenger"
+  }
+}

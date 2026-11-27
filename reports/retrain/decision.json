@@ -1,0 +1,23 @@
+{
+  "decision": "keep",
+  "reasons": [
+    "gate: cost 0.566 is above the ceiling 0.54"
+  ],
+  "gate_failures": [
+    "cost 0.566 is above the ceiling 0.54"
+  ],
+  "model_tests": {
+    "passed": 4,
+    "failed": 0,
+    "xfail": 0,
+    "skipped": 0
+  },
+  "champion_version": "1",
+  "challenger_version": "2",
+  "champion_threshold": 0.075,
+  "challenger_threshold": 0.09,
+  "rule": {
+    "max_cost_increase": 0.0
+  },
+  "created": "2026-11-23T20:02:28+00:00"
+}
